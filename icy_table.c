@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include "types.h"
 #include "persist.h"
-#include "abstract_sortable.h"
+#include "icy_table.h"
 #include "log.h"
 #include "index_table.h"
 static int keycmp32(const u32 * k1,const  u32 * k2){
@@ -34,15 +34,15 @@ static int keycmp128(const u128 * k1,const  u128 * k2){
   else return -1;
 }
 
-static u64 * get_type_sizes(abstract_sorttable * table){
+static u64 * get_type_sizes(icy_table * table){
   return (u64 *) &table->tail;
 }
 
-static mem_area ** get_mem_areas(abstract_sorttable * table){
+static mem_area ** get_mem_areas(icy_table * table){
   return (mem_area **)(&table->tail + table->column_count + table->column_count);
 }
 
-static void ** get_pointers(abstract_sorttable * table){
+static void ** get_pointers(icy_table * table){
   return &table->tail + table->column_count;
 }
 
@@ -54,7 +54,7 @@ static bool indexes_unique_and_sorted(u64 * indexes, u64 cnt){
   return true;
 }
 
-void abstract_sorttable_check_sanity(abstract_sorttable * table){
+void icy_table_check_sanity(icy_table * table){
   mem_area ** areas = get_mem_areas(table);
   u64 * type_size = get_type_sizes(table);
   u64 cnt = 0;
@@ -67,7 +67,7 @@ void abstract_sorttable_check_sanity(abstract_sorttable * table){
 }
 void * bsearch_bigger(int (*cmp)(void*, void*), void * key, void * pt, void * end, size_t keysize);
   
-bool abstract_sorttable_keys_sorted(abstract_sorttable * table, void * keys, u64 cnt){
+bool icy_table_keys_sorted(icy_table * table, void * keys, u64 cnt){
   u64 key_size = get_type_sizes(table)[0];
   if(cnt == 0) return true;
   if(table->is_multi_table){
@@ -82,7 +82,7 @@ bool abstract_sorttable_keys_sorted(abstract_sorttable * table, void * keys, u64
   return true;
 }
 
-void abstract_sorttable_init(abstract_sorttable * table,const char * table_name , u32 column_count, u32 * column_size, char ** column_name){
+void icy_table_init(icy_table * table,const char * table_name , u32 column_count, u32 * column_size, char ** column_name){
   char pathbuf[100];
   *((u32 *)(&table->column_count)) = column_count;
   mem_area ** mem_areas = get_mem_areas(table);
@@ -119,12 +119,12 @@ void abstract_sorttable_init(abstract_sorttable * table,const char * table_name 
     pointers[i] = mem_areas[i]->ptr;
   }
   table->count = mem_areas[0]->size / key_size - 1;
-  abstract_sorttable_check_sanity(table);
+  icy_table_check_sanity(table);
 }
 
-void abstract_sorttable_finds(abstract_sorttable * table, void * keys, u64 * indexes, u64 cnt){
-  ASSERT(abstract_sorttable_keys_sorted(table, keys, cnt));
-  abstract_sorttable_check_sanity(table);
+void icy_table_finds(icy_table * table, void * keys, u64 * indexes, u64 cnt){
+  ASSERT(icy_table_keys_sorted(table, keys, cnt));
+  icy_table_check_sanity(table);
   memset(indexes, 0, cnt * sizeof(indexes[0]));
   u64 key_size = get_type_sizes(table)[0];
   mem_area * key_area = get_mem_areas(table)[0];
@@ -161,9 +161,9 @@ void abstract_sorttable_finds(abstract_sorttable * table, void * keys, u64 * ind
 }
 
 
-void abstract_sorttable_insert_keys(abstract_sorttable * table, void * keys, u64 * out_indexes, u64 cnt){
-  ASSERT(abstract_sorttable_keys_sorted(table, keys, cnt));
-  abstract_sorttable_check_sanity(table);
+void icy_table_insert_keys(icy_table * table, void * keys, u64 * out_indexes, u64 cnt){
+  ASSERT(icy_table_keys_sorted(table, keys, cnt));
+  icy_table_check_sanity(table);
   u64 * column_size = get_type_sizes(table);
   mem_area ** column_area = get_mem_areas(table);
   void ** pointers = get_pointers(table);
@@ -181,7 +181,7 @@ void abstract_sorttable_insert_keys(abstract_sorttable * table, void * keys, u64
   column_area += 1;
   column_count -= 1;
 
-  abstract_sorttable_check_sanity(table);  
+  icy_table_check_sanity(table);  
   void * pt = key_area->ptr + key_size;
   void * end = key_area->ptr + key_area->size - key_size * cnt;
 
@@ -221,15 +221,15 @@ void abstract_sorttable_insert_keys(abstract_sorttable * table, void * keys, u64
   ASSERT(table->count < 100000);
 }
 
-void abstract_sorttable_inserts(abstract_sorttable * table, void ** values, u64 cnt){
-  abstract_sorttable_check_sanity(table);
+void icy_table_inserts(icy_table * table, void ** values, u64 cnt){
+  icy_table_check_sanity(table);
   ASSERT(values[0] != NULL);
   void * keys = values[0];
 
   u64 * column_size = get_type_sizes(table);
   mem_area ** column_area = get_mem_areas(table);
   
-  ASSERT(abstract_sorttable_keys_sorted(table, keys, cnt));
+  ASSERT(icy_table_keys_sorted(table, keys, cnt));
   u64 indexes[cnt];
   memset(indexes, 0, sizeof(indexes));
   u64 newcnt = 0;
@@ -237,7 +237,7 @@ void abstract_sorttable_inserts(abstract_sorttable * table, void ** values, u64 
     // overwrite is never done for multi tables.
     newcnt = cnt;
   }else{
-    abstract_sorttable_finds(table, keys, indexes, cnt);
+    icy_table_finds(table, keys, indexes, cnt);
     for(u64 i = 0; i < cnt ; i++){
       if(indexes[i] == 0)
 	newcnt += 1;
@@ -270,7 +270,7 @@ void abstract_sorttable_inserts(abstract_sorttable * table, void ** values, u64 
     }
     memset(indexes, 0, sizeof(indexes));
   // make room and insert keys
-    abstract_sorttable_insert_keys(table, newvalues, indexes, newcnt);
+    icy_table_insert_keys(table, newvalues, indexes, newcnt);
   }
 
   // Insert the new data
@@ -284,7 +284,7 @@ void abstract_sorttable_inserts(abstract_sorttable * table, void ** values, u64 
   }
 }
 
-void abstract_sorttable_clear(abstract_sorttable * table){
+void icy_table_clear(icy_table * table){
   u64 * column_size = get_type_sizes(table);
   mem_area ** column_area = get_mem_areas(table);
   void ** pointers = get_pointers(table);
@@ -296,7 +296,7 @@ void abstract_sorttable_clear(abstract_sorttable * table){
   table->count = 0;
 }
 
-void abstract_sorttable_remove_indexes(abstract_sorttable * table, u64 * indexes, size_t cnt){
+void icy_table_remove_indexes(icy_table * table, u64 * indexes, size_t cnt){
   ASSERT(indexes_unique_and_sorted(indexes, cnt));
 
   u64 * column_size = get_type_sizes(table);
@@ -319,12 +319,12 @@ void abstract_sorttable_remove_indexes(abstract_sorttable * table, u64 * indexes
     pointers[j] = column_area[j]->ptr;
   }
   table->count = column_area[0]->size / column_size[0] - 1;
-  abstract_sorttable_check_sanity(table);
+  icy_table_check_sanity(table);
   
 }
 
 void table_print_cell(void * ptr, const char * type);
-void abstract_sorttable_print(abstract_sorttable * table){
+void icy_table_print(icy_table * table){
   void ** pointers = get_pointers(table);
   u64 * sizes = get_type_sizes(table);
   for(u32 i = 0; i < table->column_count;i++)
@@ -339,7 +339,7 @@ void abstract_sorttable_print(abstract_sorttable * table){
   }
 }
 
-size_t abstract_sorttable_iter(abstract_sorttable * table, void * keys, size_t keycnt, void * out_keys, u64 * indexes, size_t cnt, size_t * idx){
+size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_keys, u64 * indexes, size_t cnt, size_t * idx){
   u64 fakeidx = 0;
   if(idx == NULL)
     idx = &fakeidx;
@@ -419,7 +419,7 @@ bool pu64(u64 * p, const char * type){
       return false;
     }
 bool pu32(u32 * p, const char * type){
-  if(strcmp(type, "u32") == 0 | 0 == strcmp(type, "int")){
+  if(strcmp(type, "u32") == 0 || 0 == strcmp(type, "int")){
     logd("%i", *p);
     return true;
   }

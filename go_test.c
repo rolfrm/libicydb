@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "persist.h"
-#include "abstract_sortable.h"
+#include "icy_table.h"
 #include "mem.h"
 #include "int_set.h"
 #include "int_set.c"
@@ -15,5 +15,5 @@ int main(){
   int_set_set(table, 5);
   int_set_set(table, 10);
   int_set_print(table);
-  return 0;
+  return -1;
 }

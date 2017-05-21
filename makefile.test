@@ -1,0 +1,31 @@
+OPT = -g3 -O4
+LIB_SOURCES = go_test.c
+CC = gcc
+TARGET = test
+LIB_OBJECTS =$(LIB_SOURCES:.c=.o)
+LDFLAGS= -L. $(OPT) -Wextra -fopenmp -rdynamic -Wl,-rpath=.
+LIBS= -licydb
+ALL= $(TARGET)
+CFLAGS =  -I. -std=gnu11 -gdwarf-2 -c $(OPT) -Wall -Wextra -Werror=implicit-function-declaration -Wformat=0 -D_GNU_SOURCE -fdiagnostics-color -Wextra  -Wwrite-strings -Werror -msse4.2 -mtune=corei7 -fopenmp -ffast-math -Werror=maybe-uninitialized # -Wsuggest-attribute=const #-DDEBUG  
+
+
+$(TARGET): $(LIB_OBJECTS)
+	$(CC) $(LDFLAGS) $(LIB_OBJECTS) $(LIBS) -o $@
+
+int_set.*:
+prebuild:
+	./table_compiler int_set key:int
+all: prebuild $(ALL)
+
+
+.c.o: $(HEADERS)
+	$(CC) $(CFLAGS) $< -o $@ -MMD -MF $@.depends 
+depend: h-depend
+clean:
+	rm -f $(LIB_OBJECTS) $(ALL) *.o.depends
+
+-include $(LIB_OBJECTS:.o=.o.depends)
+
+.PHONY: test prebuild
+test:
+	./test
