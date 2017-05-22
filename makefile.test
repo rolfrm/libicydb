@@ -1,18 +1,19 @@
 OPT = -g3 -O0
-LIB_SOURCES = go_test.c log.c mem.c array.c
+LIB_SOURCES1 = go_test.c log.c mem.c array.c
+LIB_SOURCES = $(addprefix src/, $(LIB_SOURCES1))
 CC = gcc
 TARGET = test.run
 LIB_OBJECTS =$(LIB_SOURCES:.c=.o)
 LDFLAGS= -L. $(OPT) -Wextra -fopenmp -rdynamic -Wl,-rpath=.
 LIBS= -licydb
 ALL= $(TARGET)
-CFLAGS =  -I. -std=gnu11 -gdwarf-2 -c $(OPT) -Wall -Wextra -Werror=implicit-function-declaration -Wformat=0 -D_GNU_SOURCE -fdiagnostics-color -Wextra  -Wwrite-strings -Werror -msse4.2 -mtune=corei7 -fopenmp -ffast-math -Werror=maybe-uninitialized # -Wsuggest-attribute=const #-DDEBUG  
+CFLAGS =  -Isrc -Iinclude -std=gnu11 -gdwarf-2 -c $(OPT) -Wall -Wextra -Werror=implicit-function-declaration -Wformat=0 -D_GNU_SOURCE -fdiagnostics-color -Wextra  -Wwrite-strings -Werror -msse4.2 -mtune=corei7 -fopenmp -ffast-math -Werror=maybe-uninitialized # -Wsuggest-attribute=const #-DDEBUG  
 
 $(TARGET): prebuild $(LIB_OBJECTS)
 	$(CC) $(LDFLAGS) $(LIB_OBJECTS) $(LIBS) -o $@
 
 prebuild:
-	./table_compiler int_set key:int
+	cd src ;../table_compiler int_set key:int
 
 all:  $(ALL)
 
@@ -20,7 +21,7 @@ all:  $(ALL)
 	$(CC) $(CFLAGS) $< -o $@ -MMD -MF $@.depends 
 depend: h-depend
 clean:
-	rm -f $(LIB_OBJECTS) $(ALL) *.o.depends
+	rm -f $(LIB_OBJECTS) $(ALL) src/*.o.depends
 
 -include $(LIB_OBJECTS:.o=.o.depends)
 
