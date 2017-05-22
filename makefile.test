@@ -1,7 +1,7 @@
 OPT = -g3 -O4
 LIB_SOURCES = go_test.c
 CC = gcc
-TARGET = test
+TARGET = test.run
 LIB_OBJECTS =$(LIB_SOURCES:.c=.o)
 LDFLAGS= -L. $(OPT) -Wextra -fopenmp -rdynamic -Wl,-rpath=.
 LIBS= -licydb
@@ -11,11 +11,10 @@ CFLAGS =  -I. -std=gnu11 -gdwarf-2 -c $(OPT) -Wall -Wextra -Werror=implicit-func
 $(TARGET): prebuild $(LIB_OBJECTS)
 	$(CC) $(LDFLAGS) $(LIB_OBJECTS) $(LIBS) -o $@
 
-int_set.*:
 prebuild:
 	./table_compiler int_set key:int
-all: prebuild $(ALL)
 
+all:  $(ALL)
 
 .c.o: $(HEADERS)
 	$(CC) $(CFLAGS) $< -o $@ -MMD -MF $@.depends 
@@ -26,5 +25,5 @@ clean:
 -include $(LIB_OBJECTS:.o=.o.depends)
 
 .PHONY: test prebuild
-test:
-	./test
+test: 	$(TARGET)
+	./$(TARGET)
