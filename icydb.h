@@ -6,4 +6,5 @@
 #include <stdbool.h>
 #include "icy_mem.h"
 #include "icy_table.h"
+#include "icy_vector.h"
 #endif

@@ -18,4 +18,4 @@ void icy_table_remove_indexes(icy_table * table, size_t * indexes, size_t index_
 void icy_table_print(icy_table * table);
 size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_keys, size_t * indexes, size_t cnt, size_t * idx);
 
-void add_table_printer(bool (*printer)(void * ptr, const char * type));
+void icy_table_add(bool (*printer)(void * ptr, const char * type));

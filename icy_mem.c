@@ -15,15 +15,8 @@
 #include "array.h"
 #include "utils.h"
 
-icy_mem * icy_mems = NULL;
-u64 icy_mem_cnt = 0;
-
-u64 file_size(const char * path){
-  int fd = open(path, O_RDWR | O_CREAT, 0666);
-  u64 end = lseek(fd, 0, SEEK_END);
-  close(fd);
-  return end;
-}
+static icy_mem * icy_mems = NULL;
+static u64 icy_mem_cnt = 0;
 
 icy_mem * get_icy_mem_by_name(const char * name){
   for(u64 i = 0; i < icy_mem_cnt; i++){
@@ -148,7 +141,6 @@ void * icy_mem_alloc2(const char * name, size_t min_size, size_t * out_size){
     ASSERT(0 == ftruncate(fd, min_size));
     size = lseek(fd, 0, SEEK_END);
   }
-  //logd("new size: %i\n", size);
   lseek(fd, 0, SEEK_SET);
   void * ptr = mmap(NULL, size, PROT_READ | PROT_WRITE , MAP_SHARED, fd, 0);
   ASSERT(ptr != NULL);

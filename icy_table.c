@@ -6,10 +6,8 @@
 #include <string.h>
 #include <sys/types.h>
 #include "types.h"
-#include "icy_mem.h"
-#include "icy_table.h"
 #include "log.h"
-#include "icy_vector.h"
+#include "icydb_int.h"
 static int keycmp32(const u32 * k1,const  u32 * k2){
   if(*k1 > *k2)
     return 1;
@@ -323,7 +321,7 @@ void icy_table_remove_indexes(icy_table * table, u64 * indexes, size_t cnt){
   
 }
 
-void table_print_cell(void * ptr, const char * type);
+void icy_print_cell(void * ptr, const char * type);
 void icy_table_print(icy_table * table){
   void ** pointers = get_pointers(table);
   u64 * sizes = get_type_sizes(table);
@@ -332,7 +330,7 @@ void icy_table_print(icy_table * table){
   logd("    rows: %i\n", table->count);
   for(u32 i = 0; i < table->count; i++){
     for(u32 j = 0; j < table->column_count;j++){
-      table_print_cell(pointers[j] + (1 + i) * sizes[j], table->column_types[j]);
+      icy_print_cell(pointers[j] + (1 + i) * sizes[j], table->column_types[j]);
       logd(" ");
     }
     logd("\n");
@@ -388,7 +386,7 @@ size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_
   return orig_cnt - cnt;
 }
 
-void * bsearch_bigger(int (*cmp)(void*, void*), void * key, void * pt, void * end, size_t keysize){
+ICY_HIDDEN void * bsearch_bigger(int (*cmp)(void*, void*), void * key, void * pt, void * end, size_t keysize){
 
   u64 a = 0;
   u64 cnt = ((u64)(end - pt)) / keysize;
@@ -410,7 +408,7 @@ void * bsearch_bigger(int (*cmp)(void*, void*), void * key, void * pt, void * en
 
 
 
-bool pu64(u64 * p, const char * type){
+static bool pu64(u64 * p, const char * type){
       if(strcmp(type, "u64") == 0){
 	
 	logd("%i", *p);
@@ -418,7 +416,7 @@ bool pu64(u64 * p, const char * type){
       }
       return false;
     }
-bool pu32(u32 * p, const char * type){
+static bool pu32(u32 * p, const char * type){
   if(strcmp(type, "u32") == 0 || 0 == strcmp(type, "int")){
     logd("%i", *p);
     return true;
@@ -426,7 +424,7 @@ bool pu32(u32 * p, const char * type){
   return false;
 }
 
-bool pf32(f32 * p, const char * type){
+static bool pf32(f32 * p, const char * type){
   if(strcmp(type, "f32") == 0){
     logd("%f", *p);
     return true;
@@ -434,29 +432,29 @@ bool pf32(f32 * p, const char * type){
   return false;
 }
 
-bool (** printer_table)(void * ptr, const char * type) = NULL ;
-size_t printer_table_cnt = 0;
+static bool (** printer_table)(void * ptr, const char * type) = NULL ;
+static size_t printer_table_cnt = 0;
 
-icy_vector * init_printers(){
+static icy_vector * init_printers(){
   static icy_vector * printers = NULL;
   if(printers == NULL){
     printers = icy_vector_create(NULL, sizeof(printer_table));
     
-    add_table_printer((void *)pu64);
-    add_table_printer((void *)pu32);
-    add_table_printer((void *)pf32);
+    icy_table_add((void *)pu64);
+    icy_table_add((void *)pu32);
+    icy_table_add((void *)pf32);
   }
   return printers;
 }
 
-void add_table_printer(bool (*printer)(void * ptr, const char * type)){
+void icy_table_add(bool (*printer)(void * ptr, const char * type)){
   icy_vector * printers = init_printers();
   size_t indx = icy_vector_alloc(printers);
   ((void **)icy_vector_lookup(printers, indx))[0] = printer;
   printer_table = icy_vector_all(printers, &printer_table_cnt);
 }
 
-void table_print_cell(void * ptr, const char * type){
+void icy_print_cell(void * ptr, const char * type){
   init_printers();
   
   for(size_t i = 0; i < printer_table_cnt; i++){
