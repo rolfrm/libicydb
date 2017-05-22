@@ -5,14 +5,14 @@
 #include <execinfo.h>
 #include <errno.h>
 #include <unistd.h>
-
-void (* iron_log_printer)(const char * fnt, va_list lst) = NULL;
+#include "icydb_int.h"
+static void (* iron_log_printer)(const char * fnt, va_list lst) = NULL;
 
 static void do_log_print(const char * fmt, va_list lst){
   vprintf (fmt, lst);
 }
 #include <stdbool.h>
-void log_print(const char * fmt, ...){
+ICY_HIDDEN void log_print(const char * fmt, ...){
   static bool is_printing = false;
   if(is_printing) return;
   is_printing = true;
@@ -25,7 +25,7 @@ void log_print(const char * fmt, ...){
   is_printing = false;
 }
 
-int str_index_of_last(const char * str, char symbol){
+static int str_index_of_last(const char * str, char symbol){
   int idx = -1;
   
   for(int i = 0; str[i] != 0; i++){
@@ -35,7 +35,7 @@ int str_index_of_last(const char * str, char symbol){
   return idx;
 }
 
-void iron_log_stacktrace(void)
+ICY_HIDDEN void iron_log_stacktrace(void)
 {
   static const char start[] = "BACKTRACE ------------\n";
   static const char end[] = "----------------------\n";
@@ -63,5 +63,3 @@ void iron_log_stacktrace(void)
   printf(end);
   free(bt_syms);
 }
-
-__thread int logd_enable = 1;

@@ -3,14 +3,15 @@
 #define TABLE_COMPILER_INDEX
 #define array_element_size(array) sizeof(array[0])
 #define array_count(array) (sizeof(array)/array_element_size(array))
-
+#include "icydb.h"
+#include <stdlib.h>
 #endif
 
 
 TABLE_NAME * TABLE_NAME_create(const char * optional_name){
   static const char * const column_names[] = COLUMN_NAMES;
   static const char * const column_types[] = COLUMN_TYPE_NAMES;
-  TABLE_NAME * instance = alloc0(sizeof(TABLE_NAME));
+  TABLE_NAME * instance = calloc(sizeof(TABLE_NAME), 1);
   icy_table_init((icy_table * )instance, optional_name, COLUMN_COUNT, (unsigned int[])COLUMN_SIZES, (char *[])COLUMN_NAMES);
   instance->column_names = (char **)column_names;
   instance->column_types = (char **)column_types;

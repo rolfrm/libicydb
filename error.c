@@ -1,7 +1,5 @@
 #include <stdbool.h>
 #include <stdint.h>
-#include <string.h>
-#include <math.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -10,10 +8,9 @@
 #include "types.h"
 #include "log.h"
 #include "utils.h"
+#include "icydb_int.h"
 
-
-void _error(const char * file, int line, const char * msg, ...){
-  UNUSED(file);UNUSED(line);UNUSED(msg);
+ICY_HIDDEN void _error(const char * file, int line, const char * msg, ...){
   char buffer[1000];  
   va_list arglist;
   va_start (arglist, msg);
