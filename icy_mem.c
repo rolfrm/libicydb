@@ -8,15 +8,15 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
-#include "persist.h"
+#include "icy_mem.h"
 #include "types.h"
 #include "log.h"
 #include "mem.h"
 #include "array.h"
 #include "utils.h"
 
-persisted_mem_area * mem_areas = NULL;
-u64 mem_area_cnt = 0;
+icy_mem * icy_mems = NULL;
+u64 icy_mem_cnt = 0;
 
 u64 file_size(const char * path){
   int fd = open(path, O_RDWR | O_CREAT, 0666);
@@ -25,31 +25,31 @@ u64 file_size(const char * path){
   return end;
 }
 
-persisted_mem_area * get_mem_area_by_name(const char * name){
-  for(u64 i = 0; i < mem_area_cnt; i++){
-    if(strcmp(mem_areas[i].name, name) == 0)
-      return mem_areas + i;
+icy_mem * get_icy_mem_by_name(const char * name){
+  for(u64 i = 0; i < icy_mem_cnt; i++){
+    if(strcmp(icy_mems[i].name, name) == 0)
+      return icy_mems + i;
   }
   return NULL;
 }
 
-persisted_mem_area * get_mem_area_by_ptr(const void * ptr){
-  for(u64 i = 0; i < mem_area_cnt; i++){
-    if(mem_areas[i].ptr == ptr)
-      return mem_areas + i;
+icy_mem * get_icy_mem_by_ptr(const void * ptr){
+  for(u64 i = 0; i < icy_mem_cnt; i++){
+    if(icy_mems[i].ptr == ptr)
+      return icy_mems + i;
   }
   return NULL;
 }
 
-persisted_mem_area * create_mem_area(const char * name){
-  return create_mem_area2(name, false);
+icy_mem * icy_mem_create(const char * name){
+  return icy_mem_create2(name, false);
 }
 static const char * data_directory = "data";
-void mem_area_set_data_directory(char * data_dir){
+void icy_mem_set_data_directory(char * data_dir){
   data_directory = data_dir;
 }
 
-persisted_mem_area * create_mem_area2(const char * name, bool only_32bit){
+icy_mem * icy_mem_create2(const char * name, bool only_32bit){
   int fd = 0;
   u64 size = 0;
   if(name != NULL){
@@ -97,17 +97,17 @@ persisted_mem_area * create_mem_area2(const char * name, bool only_32bit){
     logd("32bit: %p\n", ptr);
   }
   ASSERT(ptr != NULL);
-  persisted_mem_area mema = {
+  icy_mem mema = {
     .ptr = ptr, .size = size,
     .name = (char *) name, .fd = fd,
     .only_32bit = only_32bit,
-    .is_persisted = true
+    .persisted = true
   };
   return IRON_CLONE(mema);
 }
 
-void mem_area_free(persisted_mem_area * area){
-  if(area->is_persisted == false){
+void icy_mem_free(icy_mem * area){
+  if(area->persisted == false){
     if(area->ptr != NULL)
       dealloc(area->ptr);
   }else{
@@ -117,8 +117,8 @@ void mem_area_free(persisted_mem_area * area){
 
 }
 
-persisted_mem_area * create_non_persisted_mem_area(){
-  persisted_mem_area mema = {
+icy_mem * icy_mem_create3(){
+  icy_mem mema = {
     .ptr = NULL, .size = 0,
     .name = (char *)"", .fd = 0,
     .only_32bit = false
@@ -126,11 +126,11 @@ persisted_mem_area * create_non_persisted_mem_area(){
   return iron_clone(&mema, sizeof(mema));
 }
 
-void * persist_alloc2(const char * name, size_t min_size, size_t * out_size){
+void * icy_mem_alloc2(const char * name, size_t min_size, size_t * out_size){
   if(min_size == 0)
     min_size = 1;
   {
-    persisted_mem_area * area = get_mem_area_by_name(name);
+    icy_mem * area = get_icy_mem_by_name(name);
     if(area != NULL){
       *out_size = area->size;
       return area->ptr;
@@ -152,23 +152,23 @@ void * persist_alloc2(const char * name, size_t min_size, size_t * out_size){
   lseek(fd, 0, SEEK_SET);
   void * ptr = mmap(NULL, size, PROT_READ | PROT_WRITE , MAP_SHARED, fd, 0);
   ASSERT(ptr != NULL);
-  persisted_mem_area mema = {.ptr = ptr, .size = size, .name = fmtstr("%s", name), .fd = fd};
-  list_push2(mem_areas, mem_area_cnt, mema);
+  icy_mem mema = {.ptr = ptr, .size = size, .name = fmtstr("%s", name), .fd = fd};
+  list_push2(icy_mems, icy_mem_cnt, mema);
   *out_size = size;
   return ptr;
 }
 
 
-void * persist_alloc(const char * name, size_t min_size){
+void * icy_mem_alloc(const char * name, size_t min_size){
   size_t s = 0;
-  return persist_alloc2(name, min_size, &s);
+  return icy_mem_alloc2(name, min_size, &s);
 }
 
-void mem_area_realloc(persisted_mem_area * area, u64 size){
+void icy_mem_realloc(icy_mem * area, u64 size){
   ASSERT(area != NULL);
   if(area->size == size) return;
   
-  if(false == area->is_persisted){
+  if(false == area->persisted){
     area->ptr = ralloc(area->ptr, area->size = size);
     return;
   }

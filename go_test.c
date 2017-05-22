@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "persist.h"
+#include "icy_mem.h"
 #include "icy_table.h"
 #include "mem.h"
 #include "int_set.h"

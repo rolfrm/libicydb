@@ -1,9 +1,9 @@
 OPT = -g3 -O0
-LIB_SOURCES = icy_mem.c icy_table.c log.c mem.c error.c array.c icy_vector.c
+LIB_SOURCES = table_compiler.c icy_mem.c icy_table.c log.c mem.c error.c array.c icy_vector.c fileio.c
 CC = gcc
-TARGET = libicydb.so
+TARGET = table_compiler
 LIB_OBJECTS =$(LIB_SOURCES:.c=.o)
-LDFLAGS= -L. $(OPT) -Wextra -shared -fPIC #-Wl,-stack_size,0x100000000  #-ftlo #setrlimit on linux 
+LDFLAGS= -L. $(OPT) -Wextra 
 LIBS= #-ldl -lm -lGL -lpthread -lglfw -lGLEW -lpng #-lmcheck
 ALL= $(TARGET)
 CFLAGS =  -I. -std=gnu11 -gdwarf-2 -c $(OPT) -Wall -Wextra -Werror=implicit-function-declaration -Wformat=0 -D_GNU_SOURCE -fdiagnostics-color -Wextra  -Wwrite-strings -Werror -msse4.2 -mtune=corei7 -fopenmp -ffast-math -Werror=maybe-uninitialized -fPIC # -Wsuggest-attribute=const #-DDEBUG  

@@ -6,10 +6,10 @@
 #include <string.h>
 #include <sys/types.h>
 #include "types.h"
-#include "persist.h"
+#include "icy_mem.h"
 #include "icy_table.h"
 #include "log.h"
-#include "index_table.h"
+#include "icy_vector.h"
 static int keycmp32(const u32 * k1,const  u32 * k2){
   if(*k1 > *k2)
     return 1;
@@ -38,8 +38,8 @@ static u64 * get_type_sizes(icy_table * table){
   return (u64 *) &table->tail;
 }
 
-static mem_area ** get_mem_areas(icy_table * table){
-  return (mem_area **)(&table->tail + table->column_count + table->column_count);
+static icy_mem ** get_icy_mems(icy_table * table){
+  return (icy_mem **)(&table->tail + table->column_count + table->column_count);
 }
 
 static void ** get_pointers(icy_table * table){
@@ -55,7 +55,7 @@ static bool indexes_unique_and_sorted(u64 * indexes, u64 cnt){
 }
 
 void icy_table_check_sanity(icy_table * table){
-  mem_area ** areas = get_mem_areas(table);
+  icy_mem ** areas = get_icy_mems(table);
   u64 * type_size = get_type_sizes(table);
   u64 cnt = 0;
   for(u32 i = 0; i < table->column_count; i++){
@@ -85,7 +85,7 @@ bool icy_table_keys_sorted(icy_table * table, void * keys, u64 cnt){
 void icy_table_init(icy_table * table,const char * table_name , u32 column_count, u32 * column_size, char ** column_name){
   char pathbuf[100];
   *((u32 *)(&table->column_count)) = column_count;
-  mem_area ** mem_areas = get_mem_areas(table);
+  icy_mem ** icy_mems = get_icy_mems(table);
   void ** pointers = get_pointers(table);
   u64 * type_sizes = get_type_sizes(table);
   u64 key_size = column_size[0];
@@ -102,23 +102,23 @@ void icy_table_init(icy_table * table,const char * table_name , u32 column_count
   for(u32 i = 0; i < column_count; i++){
     type_sizes[i] = column_size[i];
     if(column_name[i] == NULL || table_name == NULL){
-      mem_areas[i] = create_non_persisted_mem_area();
+      icy_mems[i] = icy_mem_create3();
     }else{
       sprintf(pathbuf, "table2/%s.%s", table_name, column_name[i]);
-      mem_areas[i] = create_mem_area(pathbuf);
+      icy_mems[i] = icy_mem_create(pathbuf);
     }
-    if(mem_areas[i]->size < type_sizes[i]){
-      if(i > 0 && mem_areas[0]->size > type_sizes[0]){
-	mem_area_realloc(mem_areas[i], type_sizes[i] * (mem_areas[0]->size / type_sizes[0]));
+    if(icy_mems[i]->size < type_sizes[i]){
+      if(i > 0 && icy_mems[0]->size > type_sizes[0]){
+	icy_mem_realloc(icy_mems[i], type_sizes[i] * (icy_mems[0]->size / type_sizes[0]));
       }else{
-	mem_area_realloc(mem_areas[i], type_sizes[i]);
+	icy_mem_realloc(icy_mems[i], type_sizes[i]);
       }
-      memset(mem_areas[i]->ptr, 0, mem_areas[i]->size);
+      memset(icy_mems[i]->ptr, 0, icy_mems[i]->size);
     }
     
-    pointers[i] = mem_areas[i]->ptr;
+    pointers[i] = icy_mems[i]->ptr;
   }
-  table->count = mem_areas[0]->size / key_size - 1;
+  table->count = icy_mems[0]->size / key_size - 1;
   icy_table_check_sanity(table);
 }
 
@@ -127,7 +127,7 @@ void icy_table_finds(icy_table * table, void * keys, u64 * indexes, u64 cnt){
   icy_table_check_sanity(table);
   memset(indexes, 0, cnt * sizeof(indexes[0]));
   u64 key_size = get_type_sizes(table)[0];
-  mem_area * key_area = get_mem_areas(table)[0];
+  icy_mem * key_area = get_icy_mems(table)[0];
   
   if(key_area->size <= key_size)
     return;
@@ -165,14 +165,14 @@ void icy_table_insert_keys(icy_table * table, void * keys, u64 * out_indexes, u6
   ASSERT(icy_table_keys_sorted(table, keys, cnt));
   icy_table_check_sanity(table);
   u64 * column_size = get_type_sizes(table);
-  mem_area ** column_area = get_mem_areas(table);
+  icy_mem ** column_area = get_icy_mems(table);
   void ** pointers = get_pointers(table);
-  mem_area * key_area = column_area[0];
+  icy_mem * key_area = column_area[0];
   u64 key_size = column_size[0];
   u32 column_count = table->column_count;
   // make room for new data.
   for(u32 i = 0; i < column_count; i++){
-    mem_area_realloc(column_area[i], column_area[i]->size + cnt * column_size[i]);
+    icy_mem_realloc(column_area[i], column_area[i]->size + cnt * column_size[i]);
     pointers[i] = column_area[i]->ptr;
   }
   
@@ -227,7 +227,7 @@ void icy_table_inserts(icy_table * table, void ** values, u64 cnt){
   void * keys = values[0];
 
   u64 * column_size = get_type_sizes(table);
-  mem_area ** column_area = get_mem_areas(table);
+  icy_mem ** column_area = get_icy_mems(table);
   
   ASSERT(icy_table_keys_sorted(table, keys, cnt));
   u64 indexes[cnt];
@@ -244,7 +244,7 @@ void icy_table_inserts(icy_table * table, void ** values, u64 cnt){
     }
     if(newcnt != cnt){
       for(u32 j = 1; j < table->column_count; j++){
-	mem_area * value_area = column_area[j];
+	icy_mem * value_area = column_area[j];
 	u32 size = column_size[j];
 	for(u64 i = 0; i < cnt; i++){
 	  if(indexes[i] != 0){
@@ -286,11 +286,11 @@ void icy_table_inserts(icy_table * table, void ** values, u64 cnt){
 
 void icy_table_clear(icy_table * table){
   u64 * column_size = get_type_sizes(table);
-  mem_area ** column_area = get_mem_areas(table);
+  icy_mem ** column_area = get_icy_mems(table);
   void ** pointers = get_pointers(table);
   
   for(u32 i = 0; i < table->column_count; i++){
-    mem_area_realloc(column_area[i], column_size[i]);
+    icy_mem_realloc(column_area[i], column_size[i]);
     pointers[i] = column_area[i]->ptr;
   }
   table->count = 0;
@@ -300,7 +300,7 @@ void icy_table_remove_indexes(icy_table * table, u64 * indexes, size_t cnt){
   ASSERT(indexes_unique_and_sorted(indexes, cnt));
 
   u64 * column_size = get_type_sizes(table);
-  mem_area ** column_area = get_mem_areas(table);
+  icy_mem ** column_area = get_icy_mems(table);
   void ** pointers = get_pointers(table);
   
   const u64 _table_cnt = column_area[0]->size / column_size[0];
@@ -315,7 +315,7 @@ void icy_table_remove_indexes(icy_table * table, u64 * indexes, size_t cnt){
       memmove(pt + index * size, pt + (1 + index) * size, (table_cnt - index - 1) * size);
       table_cnt--;
     }
-    mem_area_realloc(column_area[j], table_cnt * size);
+    icy_mem_realloc(column_area[j], table_cnt * size);
     pointers[j] = column_area[j]->ptr;
   }
   table->count = column_area[0]->size / column_size[0] - 1;
@@ -345,7 +345,7 @@ size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_
     idx = &fakeidx;
   
   u64 key_size = get_type_sizes(table)[0];
-  mem_area * key_area = get_mem_areas(table)[0];
+  icy_mem * key_area = get_icy_mems(table)[0];
   
   u64 orig_cnt = cnt;
   if(*idx == 0) *idx = 1;
@@ -437,10 +437,10 @@ bool pf32(f32 * p, const char * type){
 bool (** printer_table)(void * ptr, const char * type) = NULL ;
 size_t printer_table_cnt = 0;
 
-index_table * init_printers(){
-  static index_table * printers = NULL;
+icy_vector * init_printers(){
+  static icy_vector * printers = NULL;
   if(printers == NULL){
-    printers = index_table_create(NULL, sizeof(printer_table));
+    printers = icy_vector_create(NULL, sizeof(printer_table));
     
     add_table_printer((void *)pu64);
     add_table_printer((void *)pu32);
@@ -450,10 +450,10 @@ index_table * init_printers(){
 }
 
 void add_table_printer(bool (*printer)(void * ptr, const char * type)){
-  index_table * printers = init_printers();
-  size_t indx = index_table_alloc(printers);
-  ((void **)index_table_lookup(printers, indx))[0] = printer;
-  printer_table = index_table_all(printers, &printer_table_cnt);
+  icy_vector * printers = init_printers();
+  size_t indx = icy_vector_alloc(printers);
+  ((void **)icy_vector_lookup(printers, indx))[0] = printer;
+  printer_table = icy_vector_all(printers, &printer_table_cnt);
 }
 
 void table_print_cell(void * ptr, const char * type){

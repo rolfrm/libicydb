@@ -18,7 +18,7 @@ void build_template(int argc, char ** argv, const char * template_file, const ch
   char *columns2[argc - 2];
   //char * column_names[argc - 2];
   char * column_types[argc - 2];
-  char * mem_areas[argc - 2];
+  char * icy_mems[argc - 2];
   char * ptr_attrs1[argc - 2];
   char * ptr_attrs2[argc - 2];
   char * column_sizes[argc - 2];
@@ -36,7 +36,7 @@ void build_template(int argc, char ** argv, const char * template_file, const ch
     columns2[i - 2] = fmtstr("%s * %s", column_type, column_name);
     //column_names[i - 2] = column_name;
     column_types[i - 2] = column_type;
-    mem_areas[i - 2] = fmtstr("mem_area * %s_area", column_name);
+    icy_mems[i - 2] = fmtstr("icy_mem * %s_area", column_name);
     ptr_attrs1[i - 2] = fmtstr("(void* )&%s", column_name);
     ptr_attrs2[i - 2] = fmtstr("(void* )%s", column_name);
     column_sizes[i - 2] = fmtstr("sizeof(%s)", column_type);
@@ -46,7 +46,7 @@ void build_template(int argc, char ** argv, const char * template_file, const ch
   char * value_columns = string_join(array_count(columns1), ";\n  ", columns2);
   char * value_columns2 = string_join(array_count(columns1), ", ", columns1);
   char * value_columns3 = string_join(array_count(columns2), ", ", columns2);
-  char * areas = string_join(array_count(mem_areas), ";\n  ", mem_areas);
+  char * areas = string_join(array_count(icy_mems), ";\n  ", icy_mems);
   char * ptrs1 = string_join(array_count(columns2), ", ", ptr_attrs1);
   char * ptrs2 = string_join(array_count(columns2), ", ", ptr_attrs2);
   char * colcount = fmtstr("%i", argc - 2);
