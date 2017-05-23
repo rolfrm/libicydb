@@ -1,8 +1,8 @@
 OPT = -g3 -O0
-LIB_SOURCES1 = go_test.c log.c mem.c array.c
+LIB_SOURCES1 = go_test.c log.c mem.c array.c error.c
 LIB_SOURCES = $(addprefix src/, $(LIB_SOURCES1))
 CC = gcc
-TARGET = test.run
+TARGET = icy-test
 LIB_OBJECTS =$(LIB_SOURCES:.c=.o)
 LDFLAGS= -L. $(OPT) -Wextra -fopenmp -rdynamic -Wl,-rpath=.
 LIBS= -licydb

@@ -23,9 +23,9 @@ install: $(TARGET)
 	cp include/* /usr/include
 	cp $(TARGET) /usr/lib/
 .PHONY: test
-test:
+test: $(TARGET)
 	make -f makefile.compiler
-	make -f makefile.test
+	make -f makefile.test test
 
 -include $(LIB_OBJECTS:.o=.o.depends)
 

@@ -94,7 +94,9 @@ void icy_vector_resize_sequence(icy_vector * table, icy_vector_sequence * seq,  
       void * dst = icy_vector_lookup_sequence(table, nseq);
       memmove(dst, src, MIN(seq->count, nseq.count) * table->element_size);
     }
+
     icy_vector_remove_sequence(table, seq);
+
   }
   *seq = nseq;
 }
