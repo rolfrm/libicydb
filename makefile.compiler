@@ -1,8 +1,8 @@
 OPT = -g3 -O0
-LIB_SOURCES1 = table_compiler.c icy_mem.c icy_table.c log.c mem.c error.c array.c icy_vector.c fileio.c
+LIB_SOURCES1 = icyc.c icy_mem.c icy_table.c log.c mem.c error.c array.c icy_vector.c fileio.c
 LIB_SOURCES = $(addprefix src/, $(LIB_SOURCES1))
 CC = gcc
-TARGET = table_compiler
+TARGET = icy-table
 LIB_OBJECTS =$(LIB_SOURCES:.c=.o)
 LDFLAGS= -L. $(OPT) -Wextra 
 LIBS= #-ldl -lm -lGL -lpthread -lglfw -lGLEW -lpng #-lmcheck

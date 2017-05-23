@@ -13,7 +13,7 @@ $(TARGET): prebuild $(LIB_OBJECTS)
 	$(CC) $(LDFLAGS) $(LIB_OBJECTS) $(LIBS) -o $@
 
 prebuild:
-	cd src ;../table_compiler int_set key:int
+	cd src ;../icy-table int_set key:int
 
 all:  $(ALL)
 
