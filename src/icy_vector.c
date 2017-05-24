@@ -8,6 +8,8 @@
 
 #include "icy_mem.h"
 #include "icy_vector.h"
+
+
 size_t icy_vector_capacity(icy_vector * table){
   return table->area->size / table->element_size - 4;
 }
@@ -24,9 +26,18 @@ size_t _icy_vector_free_index_count(icy_vector * table){
   return ((size_t *) table->free_indexes->ptr)[0];
 }
 
+
 void _icy_vector_free_index_count_set(icy_vector * table, size_t cnt){
   ((size_t *) table->free_indexes->ptr)[0] = cnt;
 }
+
+
+void icy_vector_check_sanity(icy_vector * table){
+  size_t cnt = _icy_vector_free_index_count(table);
+  ASSERT(table->free_indexes->size / sizeof(size_t) > cnt);
+}
+
+
 void * icy_vector_all(icy_vector * table, size_t * cnt){
   // return count -1 and a pointer from the placeholder element.
   *cnt = icy_vector_count(table) - 1;
@@ -35,6 +46,7 @@ void * icy_vector_all(icy_vector * table, size_t * cnt){
 void icy_vector_clear(icy_vector * table){
   icy_vector_count_set(table, 1);
   _icy_vector_free_index_count_set(table, 0);
+  icy_mem_realloc(table->free_indexes, sizeof(size_t));
 }
 
 size_t _icy_vector_alloc(icy_vector * table){
@@ -79,6 +91,7 @@ void icy_vector_remove(icy_vector * table, size_t index){
 }
 
 void icy_vector_resize_sequence(icy_vector * table, icy_vector_sequence * seq,  size_t new_count){
+  icy_vector_check_sanity(table);
   icy_vector_sequence nseq = {0};
   if(new_count == 0){
     icy_vector_remove_sequence(table, seq);
@@ -87,18 +100,17 @@ void icy_vector_resize_sequence(icy_vector * table, icy_vector_sequence * seq,  
   }
   
   nseq = icy_vector_alloc_sequence(table, new_count);
-  
+
   if(seq->index != 0 && seq->count != 0 ){
     if(new_count > 0){
       void * src = icy_vector_lookup_sequence(table, *seq);
       void * dst = icy_vector_lookup_sequence(table, nseq);
       memmove(dst, src, MIN(seq->count, nseq.count) * table->element_size);
     }
-
     icy_vector_remove_sequence(table, seq);
-
   }
   *seq = nseq;
+  icy_vector_check_sanity(table);
 }
 
 icy_vector_sequence icy_vector_alloc_sequence(icy_vector * table, size_t  count){
@@ -251,8 +263,10 @@ void icy_vector_optimize(icy_vector * table){
   }
   _icy_vector_free_index_count_set(table, free_cnt);
   icy_vector_count_set(table, table_cnt);
+
   size_t newsize = table_cnt * table->element_size + table->element_size * 5;
   icy_mem_realloc(table->area, newsize);
-  size_t newsize2 = free_cnt * table->element_size + sizeof(size_t);
+  size_t newsize2 = (1 + free_cnt) * sizeof(size_t);
   icy_mem_realloc(table->free_indexes, newsize2);
+  icy_vector_check_sanity(table);
 }

@@ -23,7 +23,6 @@ bool icy_vector_test(){
     }
 
     for(int k = 1; k < 4;k++){
-      logd("K: %i\n", k);
       icy_vector * t = icy_vector_create("__icy_vector_test__", sizeof(u32));
       icy_vector_clear(t);
       icy_vector_optimize(t);
@@ -105,7 +104,6 @@ bool icy_vector_test(){
 
 
 int main(){
-  logd("Hellos\n");
   int_set * table = int_set_create("my-ints");
   int_set_clear(table);
   int_set_set(table, 5);
