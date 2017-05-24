@@ -104,12 +104,12 @@ int main(int argc, char ** argv){
 
   const char * dir = get_exec_path();
   dir = dirname((char *)dir);
-  char buffer[strlen(dir) + sizeof("table_template.h") + 5];
+  char buffer[strlen(dir) + sizeof("icy_table_template.h") + 5];
   memset(buffer, 0, sizeof(buffer));
-  sprintf(buffer, "%s/%s", dir, "table_template.h");
+  sprintf(buffer, "%s/%s", dir, "icy_table_template.h");
   build_template(argc, argv, buffer, fmtstr("%s.h", argv[1]));
 
-  sprintf(buffer, "%s/%s", dir, "table_template.c");
+  sprintf(buffer, "%s/%s", dir, "icy_table_template.c");
   build_template(argc, argv, buffer, fmtstr("%s.c", argv[1]));
   
 }
