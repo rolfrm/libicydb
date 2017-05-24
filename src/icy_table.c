@@ -409,13 +409,12 @@ ICY_HIDDEN void * bsearch_bigger(int (*cmp)(void*, void*), void * key, void * pt
 
 
 static bool pu64(u64 * p, const char * type){
-      if(strcmp(type, "u64") == 0){
-	
-	logd("%i", *p);
-	return true;
-      }
-      return false;
-    }
+  if(strcmp(type, "u64") == 0 || 0 == strcmp(type, "size_t")){
+    logd("%i", *p);
+    return true;
+  }
+  return false;
+}
 static bool pu32(u32 * p, const char * type){
   if(strcmp(type, "u32") == 0 || 0 == strcmp(type, "int")){
     logd("%i", *p);
@@ -425,7 +424,7 @@ static bool pu32(u32 * p, const char * type){
 }
 
 static bool pf32(f32 * p, const char * type){
-  if(strcmp(type, "f32") == 0){
+  if(strcmp(type, "f32") == 0 || 0 == strcmp(type, "float")){
     logd("%f", *p);
     return true;
   }

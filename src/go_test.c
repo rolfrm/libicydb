@@ -197,8 +197,6 @@ bool int_lookup_test(){
   ASSERT(MyTableTest_try_get(myTable, &idx, &x, &y) == false);
   MyTableTest_print(myTable);
   return TEST_SUCCESS;
-
-
 }
 
 
