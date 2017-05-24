@@ -1,11 +1,16 @@
+
 #include "int_set.h"
 #include "int_set.c"
+#include "MyTableTest.h"
+#include "MyTableTest.c"
 #include "log.h"
 #include "test.h"
 #include "mem.h"
 #include <stdint.h>
 #include "types.h"
 #include "utils.h"
+#include "math.h"
+
 bool icy_vector_test(){
   {// first test.
 
@@ -102,18 +107,105 @@ bool icy_vector_test(){
   return TEST_SUCCESS;
 }
 
+bool int_lookup_test(){
+    int_set * table = int_set_create(NULL);
+  for(int key = 100; key < 200; key+=2){
+    logd("ITERATION: %i\n", key);
+    int_set_set(table, key);
+    for(size_t i = 0; i < table->count + 1; i++){
+      logd("key %i %i\n", i, table->key[i]);
+    }
+    ASSERT(int_set_try_get(table, &key));
+  }
+  
+  for(int key = 100; key < 200; key++){
+    if(key%2 == 0){
+      ASSERT(int_set_try_get(table, &key));
+    }else{
+      ASSERT(false == int_set_try_get(table, &key));
+    }
+  }
+
+  MyTableTest * myTable = MyTableTest_create("MyTable");
+  MyTableTest_clear(myTable);
+  for(size_t j = 0; j < 2; j++){
+    size_t keys[40];
+    float xs[40];
+    float ys[40];
+    
+    for(size_t i = 0; i < 40; i++){
+      size_t key = i * 2;
+
+      float x = sin(0.1 * key);
+      float y = cos(0.1 * key);
+      keys[i] = key;
+      xs[i] = x;
+      ys[i] = y;
+    }
+    MyTableTest_insert(myTable, keys, xs, ys, 40);
+  }
+  
+  logd("COUNT: %i\n", myTable->count);
+  ASSERT(myTable->count == 40);
+  bool test = true;
+  for(size_t i = 0; i < myTable->count; i++){
+    if(test){
+      size_t key = i * 2;
+      float x = sin(0.1 * key);
+      float y = cos(0.1 * key);
+      ASSERT(myTable->index[i + 1] == key);
+      ASSERT(myTable->x[i + 1] == x);
+      ASSERT(myTable->y[i + 1] == y);
+    }else{
+      logd("%i %f %f\n", myTable->index[i + 1], myTable->x[i + 1], myTable->y[i + 1]);
+    }
+  }
+  size_t keys_to_remove[] = {8, 10, 12};
+  size_t indexes_to_remove[array_count(keys_to_remove)];
+  
+  icy_table_finds((icy_table *) myTable, keys_to_remove, indexes_to_remove, array_count(keys_to_remove));
+  icy_table_remove_indexes((icy_table *) myTable, indexes_to_remove, array_count(keys_to_remove));
+  myTable->count = myTable->index_area->size / myTable->sizes[0] - 1;
+  ASSERT(myTable->count == 40 - array_count(keys_to_remove));
+  
+  for(size_t i = 0; i < myTable->count; i++){
+    if(test){
+      ASSERT(myTable->index[i + 1] != 8 && myTable->index[i + 1] != 10 && myTable->index[i + 1] != 12);
+      size_t _i = i * 2;
+      if(_i >= 8)
+	_i = i * 2 + 6;
+      float x = sin(0.1 * _i);
+      float y = cos(0.1 * _i);
+      ASSERT(myTable->x[i + 1] == x);
+      ASSERT(myTable->y[i + 1] == y);
+    }
+  }
+  ASSERT(myTable->index[20] > 0);
+  MyTableTest_set(myTable, 100, 4.5, 6.0);
+  ASSERT(myTable->index[20] > 0);
+  size_t key = 100, index = 0;
+  MyTableTest_lookup(myTable, &key, &index, 1);
+  TEST_ASSERT(index != 0);
+  logd("%i %f %f\n", index, myTable->x[index], myTable->y[index]);
+  TEST_ASSERT(myTable->x[index] == 4.5 && myTable->y[index] == 6.0);
+  size_t idx = 20;
+  float x;
+  float y;
+  ASSERT(MyTableTest_try_get(myTable, &idx, &x, &y));
+  logd("%i %f %f\n", idx, x, y);
+  idx = 21;
+  ASSERT(MyTableTest_try_get(myTable, &idx, &x, &y) == false);
+  MyTableTest_print(myTable);
+  return TEST_SUCCESS;
+
+
+}
+
+
 
 int main(){
-  int_set * table = int_set_create("my-ints");
-  int_set_clear(table);
-  int_set_set(table, 5);
-  int_set_set(table, 10);
-  int_set_set(table, -10);
-  int_set_set(table, -110);
-  int_set_set(table, -11000);
-  int_set_set(table, 11030);
-  int_set_set(table, 11035);
 
-  icy_vector_test();
+  TEST(icy_vector_test)
+  TEST(int_lookup_test);
   return 0;
 }

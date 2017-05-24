@@ -19,7 +19,8 @@
 
 
 void log_print(const char * fmt, ...);
-#define log(...) ({log_print(ANSI_COLOR_YELLOW __VA_ARGS__); log_print(ANSI_COLOR_RESET);})
+//#define log(...) ({log_print(ANSI_COLOR_YELLOW __VA_ARGS__); log_print(ANSI_COLOR_RESET);})
+#define log(...) ;
 #define logd(...) ({if(true){ if(LOG_DEBUG){log_print(ANSI_COLOR_GRAY); log_print(__VA_ARGS__); log_print(ANSI_COLOR_RESET);}}})
 #define loge(...) {log_print(ANSI_COLOR_RED);log_print(__VA_ARGS__); log_print(ANSI_COLOR_GRAY);log_print(" ");}
 #define ERROR_TRACE logd( "error: at '" __FILE__  "' line %i: \n",  __LINE__);
