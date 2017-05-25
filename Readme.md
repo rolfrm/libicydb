@@ -11,21 +11,28 @@ One of the goals of this system is also to be able to share data between running
 
 ## Compiling
 
-- ** Note: ** this does not yet work.
+The whole system should be compilable on a default linux installation. Work has to be done to support windows as the memory mapped system there is a bit different.
 
-The whole system should be compilable on a default linux installation. Work has to be done to support windows as the memory mapped system there is a bit different
-
-To compile:
+## To compile
 ```
-make all
+make
+```
+
+## To run tests
+To run tests, run the following code:
+```
+make test
+```
+
+## To install
+into /usr/lib, /usr/include, /usr/bin. Its not possible to select prefix at the moment.
+```
 sudo make install
 ```
 
-# Testing
-To run tests, run the following code:
+## To uninstall
 ```
-make all
-make tests
+sudo make uninstall
 ```
 
 ## usage:
@@ -34,14 +41,17 @@ Currently it only compiles with GCC on linux. add -licydb to your gcc arguments.
 
 to create a new table use the following syntax:
 
-```./compile_table columnName1:columnType1 columnName2:columnType2 ...```
+```./icy-table tableName columnName1:columnType1 columnName2:columnType2 ...```
+
+This will create two files tableName.c and tableName.h, that contains the code to control the table.
+
 
 The first column is the index column. The following example creates an int to float lookup table.
 ```./compile_table int_to_float key:int value:float```
 
 This will create a file called int_to_float.c and int_to_float.h. Include these where needed. They should each be able to compile on their own.
 
-The following is a short
+See the examples (not finished at the moment) for more detail.
 
 ### Tables
 a table is a set of columns (arrays), indexed by a key column. The key column is sorted so that lookups can be efficiently performed. Single element lookups are not extremely effective, the true efficiency arrises from doing lookups with multiple keys at the same time.

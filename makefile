@@ -23,15 +23,16 @@ clean:
 	rm -f $(LIB_OBJECTS) $(ALL) src/*.o.depends
 install: $(TARGET)
 	make -f makefile.compiler
-	cp include/* /usr/include/	
-	cp $(TARGET) /usr/lib/
-	cp src/icy_table_template.c src/icy_table_template.h /usr/lib/
-	cp icy-table /usr/bin/
+	cp -v include/* /usr/include/	
+	cp -v $(TARGET) /usr/lib/
+	cp -v icy_table_template.c icy_table_template.h /usr/bin/
+	cp -v icy-table /usr/bin/
 uninstall:
-	rm /usr/include/icy_*
-	rm /usr/lib/$(TARGET)
-	rm /usr/lib/icy_*
-	rm /usr/bin/icy-table
+	rm -v /usr/include/icy_* || true
+	rm -v /usr/lib/$(TARGET) || true
+	rm -v /usr/bin/icy-table || true
+	rm -v /usr/bin/icy_* || true
+	echo "done.."
 .PHONY: test
 test: $(TARGET)
 	make -f makefile.compiler
