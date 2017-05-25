@@ -41,13 +41,13 @@ Currently it only compiles with GCC on linux. add -licydb to your gcc arguments.
 
 to create a new table use the following syntax:
 
-```./icy-table tableName columnName1:columnType1 columnName2:columnType2 ...```
+```icy-table tableName columnName1:columnType1 columnName2:columnType2 ...```
 
 This will create two files tableName.c and tableName.h, that contains the code to control the table.
 
 
 The first column is the index column. The following example creates an int to float lookup table.
-```./compile_table int_to_float key:int value:float```
+```icy-table int_to_float key:int value:float```
 
 This will create a file called int_to_float.c and int_to_float.h. Include these where needed. They should each be able to compile on their own.
 
