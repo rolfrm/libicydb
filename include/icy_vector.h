@@ -44,5 +44,5 @@ void icy_vector_clear(icy_vector * table);
 bool icy_vector_contains(icy_vector * table, icy_index index);
 // optimizes the vector. This is function is dont automatically and is mostly exported for testing purposes.
 void icy_vector_optimize(icy_vector * table);
-// Destroys the icy vector.
+// Destroys the icy vector. It does not remove the data on the disk
 void icy_vector_destroy(icy_vector ** table);
