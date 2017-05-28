@@ -55,7 +55,7 @@ size_t _icy_vector_alloc(icy_vector * table){
     size_t idx = ((size_t *) table->free_indexes->ptr)[freeindexcnt];
     _icy_vector_free_index_count_set(table, freeindexcnt - 1);
     ASSERT(idx != 0);
-    void * p = icy_vector_lookup(table, idx);
+    void * p = icy_vector_lookup(table, (icy_index){idx});
     memset(p, 0, table->element_size);
     return idx;
   }
@@ -72,21 +72,21 @@ size_t _icy_vector_alloc(icy_vector * table){
   return idx;
 }
 
-size_t icy_vector_alloc(icy_vector * table){
+icy_index icy_vector_alloc(icy_vector * table){
   auto index = _icy_vector_alloc(table);
   ASSERT(index > 0);
-  return index;
+  return (icy_index){index};
 }
 
 
-void icy_vector_remove(icy_vector * table, size_t index){
-  ASSERT(index < icy_vector_count(table));
-  ASSERT(index > 0);
+void icy_vector_remove(icy_vector * table, icy_index index){
+  ASSERT(index.index < icy_vector_count(table));
+  ASSERT(index.index > 0);
   size_t cnt = _icy_vector_free_index_count(table);
   icy_mem_realloc(table->free_indexes, table->free_indexes->size + sizeof(size_t));
   ((size_t *)table->free_indexes->ptr)[cnt + 1] = 0;
   //ASSERT(memmem(table->free_indexes->ptr + sizeof(size_t), (cnt + 1) * sizeof(size_t), &index, sizeof(index)) == NULL);
-  ((size_t *)table->free_indexes->ptr)[cnt + 1] = index;
+  ((size_t *)table->free_indexes->ptr)[cnt + 1] = index.index;
   ((size_t *) table->free_indexes->ptr)[0] += 1;
 }
 
@@ -101,7 +101,7 @@ void icy_vector_resize_sequence(icy_vector * table, icy_vector_sequence * seq,  
   
   nseq = icy_vector_alloc_sequence(table, new_count);
 
-  if(seq->index != 0 && seq->count != 0 ){
+  if(seq->index.index != 0 && seq->count != 0 ){
     if(new_count > 0){
       void * src = icy_vector_lookup_sequence(table, *seq);
       void * dst = icy_vector_lookup_sequence(table, nseq);
@@ -140,9 +140,9 @@ icy_vector_sequence icy_vector_alloc_sequence(icy_vector * table, size_t  count)
 	    ptr[j + 1] = ptr[j + cnt + 1];
 	  
 	  ASSERT(start != 0);
-	  void * p = icy_vector_lookup(table, start);
+	  void * p = icy_vector_lookup(table, (icy_index){start});
 	  memset(p, 0, cnt * table->element_size);
-	  return (icy_vector_sequence){.index = start, .count = cnt};
+	  return (icy_vector_sequence){.index = (icy_index){start}, .count = cnt};
 	}
       }
     }
@@ -156,7 +156,7 @@ icy_vector_sequence icy_vector_alloc_sequence(icy_vector * table, size_t  count)
   }
   size_t idx = icy_vector_count(table);
   icy_vector_count_set(table,idx + count);
-  return (icy_vector_sequence){.index = idx, .count = count};
+  return (icy_vector_sequence){.index = (icy_index){idx}, .count = count};
 }
 
 void icy_vector_remove_sequence(icy_vector * table, icy_vector_sequence * seq){
@@ -164,14 +164,14 @@ void icy_vector_remove_sequence(icy_vector * table, icy_vector_sequence * seq){
   icy_mem_realloc(table->free_indexes, table->free_indexes->size + seq->count * sizeof(size_t));
   //ASSERT(memmem(table->free_indexes->ptr + sizeof(size_t), cnt * sizeof(size_t), &index, sizeof(index)) == NULL);
   for(size_t i = 0; i < seq->count; i++)
-    ((size_t *)table->free_indexes->ptr)[cnt + i + 1] = seq->index + i;
+    ((size_t *)table->free_indexes->ptr)[cnt + i + 1] = seq->index.index + i;
   ((size_t *) table->free_indexes->ptr)[0] += seq->count;
   memset(seq, 0, sizeof(*seq));
   icy_vector_optimize(table);
 }
 
 void * icy_vector_lookup_sequence(icy_vector * table, icy_vector_sequence seq){
-  if(seq.index == 0)
+  if(seq.index.index == 0)
     return NULL;
   return icy_vector_lookup(table, seq.index);
 }
@@ -179,8 +179,7 @@ void * icy_vector_lookup_sequence(icy_vector * table, icy_vector_sequence seq){
 
 icy_vector * icy_vector_create(const char * name, size_t element_size){
   ASSERT(element_size > 0);
-  icy_vector table = {0};
-  table.element_size = element_size;
+  icy_vector table = {.area = NULL, .free_indexes = NULL, .element_size = element_size};
   if(name != NULL){
 
     table.area = icy_mem_create(name);
@@ -215,21 +214,21 @@ void icy_vector_destroy(icy_vector ** _table){
   icy_mem_free(table->free_indexes);
 }
 
-void * icy_vector_lookup(icy_vector * table, size_t index){
-  ASSERT(index < icy_vector_count(table));
-  ASSERT(index > 0);
-  return table->area->ptr + (4 + index) * table->element_size;
+void * icy_vector_lookup(icy_vector * table, icy_index index){
+  ASSERT(index.index < icy_vector_count(table));
+  ASSERT(index.index > 0);
+  return table->area->ptr + (4 + index.index) * table->element_size;
 }
 
-bool icy_vector_contains(icy_vector * table, size_t index){
-  if(index == 0)
+bool icy_vector_contains(icy_vector * table, icy_index index){
+  if(index.index == 0)
     return false;
-  if (index >= icy_vector_count(table))
+  if (index.index >= icy_vector_count(table))
     return false;
   size_t freecnt = _icy_vector_free_index_count(table);
   size_t * start = table->free_indexes->ptr + sizeof(size_t);
   for(size_t i = 0; i < freecnt; i++){
-    if(start[i] == index)
+    if(start[i] == index.index)
       return false;
   }
   return true;

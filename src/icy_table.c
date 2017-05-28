@@ -448,7 +448,7 @@ static icy_vector * init_printers(){
 
 void icy_table_add(bool (*printer)(void * ptr, const char * type)){
   icy_vector * printers = init_printers();
-  size_t indx = icy_vector_alloc(printers);
+  icy_index indx = icy_vector_alloc(printers);
   ((void **)icy_vector_lookup(printers, indx))[0] = printer;
   printer_table = icy_vector_all(printers, &printer_table_cnt);
 }
