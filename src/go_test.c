@@ -52,7 +52,7 @@ bool icy_vector_test(){
       icy_vector_optimize(t);
       seq = icy_vector_alloc_sequence(t, 20);
       ASSERT(seq.count == 20);
-      ASSERT(seq.index > 0);
+      ASSERT(seq.index.index > 0);
 
       for(u32 i = 1; i < 5; i++){
 	u32 * pts = icy_vector_lookup_sequence(t, seq);
@@ -84,7 +84,7 @@ bool icy_vector_test(){
 	icy_vector_remove_sequence(t, &seq3);
 	icy_vector_remove_sequence(t, &seq4); 
 	icy_vector_optimize(t);
-	u32 idxes[200];
+	icy_index idxes[200];
 	for(u32 j = 3; j < 20; j++){
 	  for(u32 i = 0; i < j * 10; i++)
 	    idxes[i] = icy_vector_alloc(t);
