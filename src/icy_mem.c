@@ -168,7 +168,6 @@ void icy_mem_realloc(icy_mem * area, u64 size){
   int flags = MREMAP_MAYMOVE;
   if(area->only_32bit)
     flags |= MAP_32BIT;
-  ASSERT(size != 0);
   area->ptr = mremap(area->ptr, area->size, size, flags);
   ASSERT(0 == ftruncate(area->fd, size));
   

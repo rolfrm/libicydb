@@ -1,5 +1,5 @@
 OPT = -g3 -O0
-LIB_SOURCES1 = icy_mem.c icy_table.c log.c mem.c error.c array.c icy_vector.c
+LIB_SOURCES1 = icy_mem.c icy_table.c log.c mem.c error.c array.c icy_vector.c icy_vector_abs.c
 LIB_SOURCES = $(addprefix src/, $(LIB_SOURCES1))
 CC = gcc
 TARGET = libicydb.so
@@ -7,7 +7,7 @@ LIB_OBJECTS =$(LIB_SOURCES:.c=.o)
 LDFLAGS= -L. $(OPT) -Wextra -shared -fPIC
 LIBS=
 ALL= $(TARGET)
-CFLAGS = -Isrc/ -Iinclude/ -std=gnu11 -c $(OPT) -Wall -Wextra -Werror=implicit-function-declaration -Wformat=0 -D_GNU_SOURCE -fdiagnostics-color -Wextra  -Wwrite-strings -Werror -msse4.2 -mtune=corei7 -ffast-math -Werror=maybe-uninitialized -fPIC
+CFLAGS = -Isrc/ -Iinclude/ -std=gnu11 -c $(OPT) -Wall -Wextra -Werror=implicit-function-declaration -Wformat=0 -D_GNU_SOURCE -fdiagnostics-color -Wextra  -Wwrite-strings -Werror -msse4.2 -mtune=corei7 -ffast-math -Werror=maybe-uninitialized -fPIC -DUSE_VALGRIND
 
 
 

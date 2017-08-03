@@ -183,9 +183,73 @@ bool int_lookup_test(){
   return TEST_SUCCESS;
 }
 
+typedef struct{
+  char ** column_names;
+  char ** column_types;
+  size_t * count;
+  size_t * capacity;
+  size_t * free_index_count;
+  const size_t column_count;
+  icy_mem * free_indexes;
+  icy_mem * header;
+  size_t column_sizes[2];
+  int * a;
+  int * b;
+  icy_mem * mem_a;
+  icy_mem * mem_b;
+  
+}icy_vector_abs_test_struct;
+
+bool icy_vector_abs_test(){
+  logd("ICY VECTOR ABS TEST\n");
+
+  icy_vector_abs_test_struct * testtable = alloc0(sizeof(icy_vector_abs_test_struct));
+  const char * names[] =  {"a", "b"};
+  const char * types[] =  {"int", "int"};
+  
+  testtable->column_names = (char **)names;
+  testtable->column_types = (char **)types;
+  ((size_t *)&testtable->column_count)[0] = 2;
+  testtable->column_sizes[0] = sizeof(int);
+  testtable->column_sizes[1] = sizeof(int);
+  icy_vector_abs_load("test_abs", (icy_vector_abs *) testtable);
+  icy_index i1 = icy_vector_abs_alloc((icy_vector_abs *) testtable);
+  icy_index i2 = icy_vector_abs_alloc((icy_vector_abs *) testtable);
+  logd("%i %i %i %i %i %i\n", i1.index, i2.index, testtable->a, testtable->b, testtable->capacity[0], testtable->count[0]);
+  testtable->a[i1.index] = 5;
+  testtable->b[i1.index] = 10;
+  testtable->a[i2.index] = 10;
+  testtable->b[i2.index] = 5;
+
+  icy_vector_abs_sequence seq = icy_vector_abs_alloc_sequence((icy_vector_abs *)testtable, 10);
+  for(size_t i = 0; i < seq.count; i++){
+    testtable->a[seq.index.index + i] = 12 + i;
+    testtable->b[seq.index.index + i] = 101 - i;
+  }
+  
+  for(size_t i = 0; i < testtable->count[0]; i++){
+    logd("%i %i\n", testtable->a[i], testtable->b[i]);
+  }
+  size_t init_cnt = *testtable->count;
+  size_t init_cap = *testtable->capacity;
+  icy_vector_abs_remove((icy_vector_abs *)testtable, i1);
+  icy_vector_abs_remove((icy_vector_abs *)testtable, i2);
+  ASSERT(init_cnt > *testtable->count);
+  init_cnt = *testtable->count;
+  icy_vector_abs_remove_sequence((icy_vector_abs *)testtable, &seq);
+  ASSERT(init_cnt > *testtable->count);
+  ASSERT(init_cap > *testtable->capacity);
+  logd("End: %i %i\n", *testtable->count, *testtable->capacity);
+  
+  
+
+  return TEST_SUCCESS;
+}
+
 int main(){
 
-  TEST(icy_vector_test)
+  TEST(icy_vector_test);
   TEST(int_lookup_test);
+  TEST(icy_vector_abs_test);
   return 0;
 }

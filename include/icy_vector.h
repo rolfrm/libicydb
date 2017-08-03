@@ -22,6 +22,8 @@ typedef struct{
   size_t count;
 }icy_vector_sequence;
 
+typedef icy_vector_sequence icy_indexes;
+
 // creates a new icy_vector. name should be NULL if a non-persisted vector is wanted. Element size is the size of each allocated element in bytes.
 icy_vector * icy_vector_create(const char * name, size_t element_size);
 
@@ -46,3 +48,40 @@ bool icy_vector_contains(icy_vector * table, icy_index index);
 void icy_vector_optimize(icy_vector * table);
 // Destroys the icy vector. It does not remove the data on the disk
 void icy_vector_destroy(icy_vector ** table);
+
+
+typedef struct{
+  char ** column_names;
+  char ** column_types;
+  size_t * count;
+  size_t * capacity;
+  size_t * free_index_count;
+  const size_t column_count;
+  icy_mem * free_indexes;
+  icy_mem * header;
+  void * tail;
+}icy_vector_abs;
+
+typedef icy_vector_sequence icy_vector_abs_sequence;
+
+// creates a new icy_abstract_vector. name should be NULL if a non-persisted vector is wanted. Element size is the size of each allocated element in bytes.
+void icy_vector_abs_load(const char * name, icy_vector_abs * base);
+
+// Allocates a single element in the vector. Returns the index of it. the index can be looked up with icy_vector_abs_lookup.
+icy_index icy_vector_abs_alloc(icy_vector_abs * table);
+// Allocates a sequence of elements. count is the number of elements that should be allocated.
+icy_vector_abs_sequence icy_vector_abs_alloc_sequence(icy_vector_abs * table, size_t count);
+//void * icy_vector_abs_lookup_sequence(icy_vector_abs * table, icy_vector_abs_sequence seq);
+void icy_vector_abs_remove_sequence(icy_vector_abs * table, icy_vector_abs_sequence * seq);
+void icy_vector_abs_resize_sequence(icy_vector_abs * table, icy_vector_abs_sequence * seq, size_t new_count);
+void icy_vector_abs_remove(icy_vector_abs * table, icy_index index);
+// Returns the number count of items in the vector. This number might not be the actually used number of elements, but rather the number of allocated slots.
+size_t icy_vector_abs_count(icy_vector_abs * table);
+// clears the vector
+void icy_vector_abs_clear(icy_vector_abs * table);
+// returns true if the vector contains an index.
+bool icy_vector_abs_contains(icy_vector_abs * table, icy_index index);
+// optimizes the vector. This is function is dont automatically and is mostly exported for testing purposes.
+void icy_vector_abs_optimize(icy_vector_abs * table);
+// Destroys the icy vector. It does not remove the data on the disk
+void icy_vector_abs_destroy(icy_vector_abs ** table);
