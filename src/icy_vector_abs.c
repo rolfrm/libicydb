@@ -87,7 +87,6 @@ size_t _icy_vector_abs_alloc(icy_vector_abs * table){
   if(freeindexcnt > 0){
     size_t idx = ((size_t *) table->free_indexes->ptr)[freeindexcnt];
     _icy_vector_abs_free_index_count_set(table, freeindexcnt - 1);
-    ASSERT(idx != 0);
     //void * p = icy_vector_abs_lookup(table, (icy_index){idx});
     //memset(p, 0, table->element_size);
     return idx;
@@ -98,13 +97,12 @@ size_t _icy_vector_abs_alloc(icy_vector_abs * table){
   }
   
   size_t idx = icy_vector_abs_count(table);
-  icy_vector_abs_count_set(table,idx + 1);
+  *table->count += 1;
   return idx;
 }
 
 icy_index icy_vector_abs_alloc(icy_vector_abs * table){
   auto index = _icy_vector_abs_alloc(table);
-  //ASSERT(index > 0);
   return (icy_index){index};
 }
 
@@ -112,11 +110,9 @@ void icy_vector_abs_remove(icy_vector_abs * table, icy_index index){
   ASSERT(index.index < icy_vector_abs_count(table));
   size_t cnt = _icy_vector_abs_free_index_count(table);
   icy_mem_realloc(table->free_indexes, table->free_indexes->size + sizeof(size_t));
-  ((size_t *)table->free_indexes->ptr)[cnt + 1] = 0;
   //ASSERT(memmem(table->free_indexes->ptr + sizeof(size_t), (cnt + 1) * sizeof(size_t), &index, sizeof(index)) == NULL);
   ((size_t *)table->free_indexes->ptr)[cnt + 1] = index.index;
-  *table->free_index_count += 1;
-  *table->count -= 1; 
+  *table->free_index_count += 1; 
 }
 
 void icy_vector_abs_resize_sequence(icy_vector_abs * table, icy_vector_abs_sequence * seq,  size_t new_count){
@@ -204,7 +200,7 @@ typedef struct{
   size_t free_index_count;
 }icy_abstract_vector_header;
 
-void icy_vector_abs_load(const char * name, icy_vector_abs * base){
+void icy_vector_abs_init(icy_vector_abs * base, const char * name){
   //ASSERT(element_size > 0);
 
   if(name != NULL){

@@ -65,7 +65,7 @@ typedef struct{
 typedef icy_vector_sequence icy_vector_abs_sequence;
 
 // creates a new icy_abstract_vector. name should be NULL if a non-persisted vector is wanted. Element size is the size of each allocated element in bytes.
-void icy_vector_abs_load(const char * name, icy_vector_abs * base);
+void icy_vector_abs_init(icy_vector_abs * base, const char * name);
 
 // Allocates a single element in the vector. Returns the index of it. the index can be looked up with icy_vector_abs_lookup.
 icy_index icy_vector_abs_alloc(icy_vector_abs * table);

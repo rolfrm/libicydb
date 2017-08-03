@@ -212,7 +212,7 @@ bool icy_vector_abs_test(){
   ((size_t *)&testtable->column_count)[0] = 2;
   testtable->column_sizes[0] = sizeof(int);
   testtable->column_sizes[1] = sizeof(int);
-  icy_vector_abs_load("test_abs", (icy_vector_abs *) testtable);
+  icy_vector_abs_init((icy_vector_abs *) testtable, "test_abs");
   icy_index i1 = icy_vector_abs_alloc((icy_vector_abs *) testtable);
   icy_index i2 = icy_vector_abs_alloc((icy_vector_abs *) testtable);
   logd("%i %i %i %i %i %i\n", i1.index, i2.index, testtable->a, testtable->b, testtable->capacity[0], testtable->count[0]);
@@ -234,22 +234,39 @@ bool icy_vector_abs_test(){
   size_t init_cap = *testtable->capacity;
   icy_vector_abs_remove((icy_vector_abs *)testtable, i1);
   icy_vector_abs_remove((icy_vector_abs *)testtable, i2);
-  ASSERT(init_cnt > *testtable->count);
+  ASSERT(init_cnt == *testtable->count);
   init_cnt = *testtable->count;
   icy_vector_abs_remove_sequence((icy_vector_abs *)testtable, &seq);
   ASSERT(init_cnt > *testtable->count);
   ASSERT(init_cap > *testtable->capacity);
   logd("End: %i %i\n", *testtable->count, *testtable->capacity);
   
-  
 
   return TEST_SUCCESS;
 }
+
+#include "myvec.h"
+#include "myvec.c"
+
+bool myvec_test(){
+  logd("MYVEC TEST\n");
+  myvec * tab = myvec_create("test_table");
+  myvec_index idx = myvec_alloc(tab);
+  ASSERT(*tab->count > 0);
+  myvec_remove(tab, idx);
+  logd("%i %i\n", *tab->count, *tab->capacity);
+  ASSERT(*tab->count != 0);
+  myvec_optimize(tab);
+  ASSERT(*tab->count == 0);
+  return TEST_SUCCESS;
+}
+
 
 int main(){
 
   TEST(icy_vector_test);
   TEST(int_lookup_test);
   TEST(icy_vector_abs_test);
+  TEST(myvec_test);
   return 0;
 }
