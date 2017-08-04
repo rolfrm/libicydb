@@ -253,9 +253,23 @@ bool myvec_test(){
   myvec * tab = myvec_create("test_table");
   myvec_index idx = myvec_alloc(tab);
   ASSERT(*tab->count > 0);
-  myvec_remove(tab, idx);
+
   logd("%i %i\n", *tab->count, *tab->capacity);
+
+  myvec_indexes indexes = myvec_alloc_sequence(tab, 100);
+  for(u32 i = 0; i < indexes.count; i++){
+    tab->col1[i] = i * 2;
+    tab->col2[i] = i * 4;
+  }
   ASSERT(*tab->count != 0);
+  
+  myvec_remove_sequence(tab, &indexes);
+  // remove sequence has built in optimize
+  ASSERT(*tab->count > 0);
+
+  
+  myvec_remove(tab, idx);
+  
   myvec_optimize(tab);
   ASSERT(*tab->count == 0);
   return TEST_SUCCESS;

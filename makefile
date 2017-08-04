@@ -23,10 +23,13 @@ clean:
 	rm -f $(LIB_OBJECTS) $(ALL) src/*.o.depends
 install: $(TARGET)
 	make -f makefile.compiler
-	cp -v include/* /usr/include/	
-	cp -v $(TARGET) /usr/lib/
-	cp -v icy_table_template.c icy_table_template.h /usr/bin/
-	cp -v icy-table /usr/bin/
+	make -f makefile.compiler2
+	cp -v include/* /usr/include/ || true
+	cp -v $(TARGET) /usr/lib/ || true
+	cp -v icy_table_template.c icy_table_template.h /usr/bin/ || true
+	cp -v icy-table /usr/bin/ || true
+	cp -v icy_vector_template.c icy_vector_template.h /usr/bin/ || true
+	cp -v icy-vector /usr/bin/icy-vector || true
 uninstall:
 	rm -v /usr/include/icy_* || true
 	rm -v /usr/lib/$(TARGET) || true

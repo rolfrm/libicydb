@@ -189,7 +189,6 @@ void icy_vector_abs_remove_sequence(icy_vector_abs * table, icy_vector_abs_seque
   for(size_t i = 0; i < seq->count; i++)
     ((size_t *)table->free_indexes->ptr)[cnt + i + 1] = seq->index.index + i;
   *table->free_index_count += seq->count;
-  *table->count -= seq->count; 
   memset(seq, 0, sizeof(*seq));
   icy_vector_abs_optimize(table);
 }
@@ -226,9 +225,12 @@ void icy_vector_abs_init(icy_vector_abs * base, const char * name){
     }
   }
   
-  
-  icy_mem_realloc(base->header, sizeof(icy_abstract_vector_header));
+  if(base->header->size < sizeof(icy_abstract_vector_header)){
+    icy_mem_realloc(base->header, sizeof(icy_abstract_vector_header));
+    memset(base->header->ptr, 0, sizeof(icy_abstract_vector_header));
+  }
   icy_abstract_vector_header * header = base->header->ptr;
+  
   base->count = &header->count;
   base->capacity = &header->capacity;
   base->free_index_count = &header->free_index_count;
@@ -285,7 +287,6 @@ void icy_vector_abs_optimize(icy_vector_abs * table){
   }
   
   size_t free_cnt = _icy_vector_abs_free_index_count(table);
-  logd("Free CNT: %i\n", free_cnt);
   if(table->free_indexes->ptr == NULL || free_cnt ==  0)
     return; // nothing to optimize.
     
