@@ -8,6 +8,23 @@
 #include "types.h"
 #include "log.h"
 #include "icydb_int.h"
+
+static int keycmpf64(const f64 * k1,const  f64 * k2){
+  if(*k1 > *k2)
+    return 1;
+  else if(*k1 == *k2)
+    return 0;
+  else return -1;
+}
+
+static int keycmpf32(const f32 * k1,const  f32 * k2){
+  if(*k1 > *k2)
+    return 1;
+  else if(*k1 == *k2)
+    return 0;
+  else return -1;
+}
+
 static int keycmp32(const u32 * k1,const  u32 * k2){
   if(*k1 > *k2)
     return 1;
@@ -89,11 +106,17 @@ void icy_table_init(icy_table * table,const char * table_name , u32 column_count
   u64 key_size = column_size[0];
   if(key_size == sizeof(u128))
     table->cmp = (void *) keycmp128;
-  else if(key_size == sizeof(u32)){
-
+  else if(column_count > 0 && table->column_types != NULL
+	  && (strcmp(table->column_types[0], "f32") == 0
+	      || strcmp(table->column_types[0], "float") == 0))
+    table->cmp = (void *) keycmpf32;
+  else if(column_count > 0 && table->column_types != NULL
+	  && (strcmp(table->column_types[0], "f64") == 0
+	      || strcmp(table->column_types[0], "double") == 0))
+    table->cmp = (void *) keycmpf64;  
+  else if(key_size == sizeof(u32))
     table->cmp = (void *) keycmp32;
-  }
-  else
+  else  
     table->cmp = (void *) keycmp;
   
 
@@ -431,6 +454,14 @@ static bool pf32(f32 * p, const char * type){
   return false;
 }
 
+static bool pf64(f64 * p, const char * type){
+  if(strcmp(type, "f64") == 0 || 0 == strcmp(type, "double")){
+    logd("%f", *p);
+    return true;
+  }
+  return false;
+}
+
 static bool (** printer_table)(void * ptr, const char * type) = NULL ;
 static size_t printer_table_cnt = 0;
 
@@ -442,6 +473,7 @@ static icy_vector * init_printers(){
     icy_table_add((void *)pu64);
     icy_table_add((void *)pu32);
     icy_table_add((void *)pf32);
+    icy_table_add((void *)pf64);
   }
   return printers;
 }
