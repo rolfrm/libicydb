@@ -278,13 +278,14 @@ bool icy_vector_abs_contains(icy_vector_abs * table, icy_index index){
   return true;
 }
 
-void icy_vector_abs_optimize(icy_vector_abs * table){
-  // the index table is optimized by sorting and removing excess elements
-  //
-  int cmpfunc (const size_t * a, const size_t * b)
+static int cmpfunc (const size_t * a, const size_t * b)
   {
     return ( *(int*)a - *(int*)b );
   }
+void icy_vector_abs_optimize(icy_vector_abs * table){
+  // the index table is optimized by sorting and removing excess elements
+  //
+  
   
   size_t free_cnt = _icy_vector_abs_free_index_count(table);
   if(table->free_indexes->ptr == NULL || free_cnt ==  0)

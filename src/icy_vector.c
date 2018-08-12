@@ -233,14 +233,15 @@ bool icy_vector_contains(icy_vector * table, icy_index index){
   }
   return true;
 }
+static int cmpfunc (const size_t * a, const size_t * b)
+{
+  return ( *(int*)a - *(int*)b );
+}
 
 void icy_vector_optimize(icy_vector * table){
   // the index table is optimized by sorting and removing excess elements
   //
-  int cmpfunc (const size_t * a, const size_t * b)
-  {
-    return ( *(int*)a - *(int*)b );
-  }
+ 
   
   size_t free_cnt = _icy_vector_free_index_count(table); 
   if(table->free_indexes->ptr == NULL || free_cnt ==  0)

@@ -156,7 +156,7 @@ void * icy_mem_alloc(const char * name, size_t min_size){
   return icy_mem_alloc2(name, min_size, &s);
 }
 
-void icy_mem_realloc(icy_mem * area, u64 size){
+void icy_mem_realloc(icy_mem * area, size_t size){
   ASSERT(area != NULL);
   if(area->size == size) return;
   

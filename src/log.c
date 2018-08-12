@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <execinfo.h>
+//#include <execinfo.h>
 #include <errno.h>
 #include <unistd.h>
 #include "icydb_int.h"
@@ -37,29 +37,5 @@ static int str_index_of_last(const char * str, char symbol){
 
 ICY_HIDDEN void iron_log_stacktrace(void)
 {
-  static const char start[] = "BACKTRACE ------------\n";
-  static const char end[] = "----------------------\n";
-  
-  void *bt[1024];
-  int bt_size;
-  char **bt_syms;
-  int i;
-  
-  bt_size = backtrace(bt, 1024);
-  bt_syms = backtrace_symbols(bt, bt_size);
-  printf(start);
-  for (i = 1; i < bt_size; i++) {
-
-    //char syscom[256];
-    int itemidx = str_index_of_last(bt_syms[i], '(');
-    char filename[itemidx + 1];
-    strncpy(filename, bt_syms[i],itemidx);
-    filename[itemidx] = 0;
-
-    printf("#%d (%s) %s\n", i, filename, bt_syms[i]);
-    //sprintf(syscom,"addr2line -j text  -e %s %p", filename, bt[i]); //last parameter is the name of this app
-    //system(syscom);
-  }
-  printf(end);
-  free(bt_syms);
+  // blep
 }

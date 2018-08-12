@@ -7,6 +7,31 @@
 #include "array.h"
 #include "mem.h"
 #include "icydb_int.h"
+
+
+typedef int (*q2cmp)(const void *, const void*, void * arg);
+
+typedef struct {
+  q2cmp cmp;
+  void * arg;
+}qsort2_data;
+
+static __thread qsort2_data qsort2_arg;
+
+
+static int qsort2_cmp(const void * a, const void * b){
+  return qsort2_arg.cmp(a,b,qsort2_arg.arg);
+}
+
+static void qsort2(void * base, size_t nmemb, size_t size, int (*compare)(const void *, const void*, void * arg), void * arg){
+  qsort2_arg.cmp = compare;
+  qsort2_arg.arg = arg;
+  qsort(base, nmemb, size, qsort2_cmp); 
+}
+
+
+
+
 ICY_HIDDEN i64 sum64(i64 * data, u64 len){
   i64 a = 0;
   for(u64 i = 0; i < len; i++)
@@ -23,20 +48,22 @@ ICY_HIDDEN u64 count(void * data, size_t num, size_t size, selector selector_fcn
   return cnt;
 }
 
+static int comp (const void * elem1, const void * elem2, void * sortcmp) 
+{
+  i64 * ids = sortcmp;
+  u64 i1 = *((u64*)elem1);
+  u64 i2 = *((u64*)elem2);
+  if (ids[i1] > ids[i2]) return  1;
+  if (ids[i1] < ids[i2]) return -1;
+  return 0;
+}
+
 ICY_HIDDEN void sort_indexed(i64 * ids, u64 count, u64 * out_indexes){
-  int comp (const void * elem1, const void * elem2) 
-  {
-    u64 i1 = *((u64*)elem1);
-    u64 i2 = *((u64*)elem2);
-    if (ids[i1] > ids[i2]) return  1;
-    if (ids[i1] < ids[i2]) return -1;
-    return 0;
-  }
 
   for(u64 i = 0; i < count;i++){
     out_indexes[i] = i;
   }
-  qsort(out_indexes,count,sizeof(i64),&comp);
+  qsort2(out_indexes,count,sizeof(i64),&comp, ids);
 }
 
 ICY_HIDDEN u64 count_uniques_sorted(i64 * ids, u64 count){

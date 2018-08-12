@@ -1,0 +1,25 @@
+OPT = -g0 -O3
+LIB_SOURCES1 = icy_mem.c icy_table.c log.c mem.c error.c array.c icy_vector.c icy_vector_abs.c
+LIB_SOURCES = $(addprefix src/, $(LIB_SOURCES1))
+CC = emcc
+TARGET = libicydb.bc
+LIB_OBJECTS =$(LIB_SOURCES:.c=.bc)
+LDFLAGS=
+LIBS=
+ALL= $(TARGET)
+CFLAGS = -Isrc/ -Iinclude/  -c $(OPT) -Wall -Werror=implicit-function-declaration -Wformat=0 -D_GNU_SOURCE -fdiagnostics-color -Wextra  -Wwrite-strings
+
+$(TARGET): $(LIB_OBJECTS)
+	$(CC) -s WASM=1 $(LDFLAGS) $(LIB_OBJECTS) $(LIBS) -o $@
+
+all: $(ALL)
+
+%.bc: %.c
+	$(CC) -s WASM=1  $(CFLAGS) $< -o $@ -MMD -MF $@.depends 
+depend: h-depend
+clean:
+	rm -f $(LIB_OBJECTS) $(ALL) src/*.bc.depends
+.PHONY: test
+
+-include $(LIB_OBJECTS:.bc=.bc.depends)
+
