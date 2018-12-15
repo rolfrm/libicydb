@@ -402,7 +402,7 @@ size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_
       cnt -= 1;
       start += key_size;
       *idx += 1; 
-    }while(cnt > 0 && table->cmp(start, key) == 0);
+    }while(cnt > 0 && start < end && table->cmp(start, key) == 0);
 
   }
   return orig_cnt - cnt;

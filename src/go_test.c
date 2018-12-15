@@ -244,7 +244,7 @@ bool icy_vector_abs_test(){
 
   return TEST_SUCCESS;
 }
-
+/*
 #include "myvec.h"
 #include "myvec.c"
 
@@ -273,7 +273,7 @@ bool myvec_test(){
   myvec_optimize(tab);
   ASSERT(*tab->count == 0);
   return TEST_SUCCESS;
-}
+  }*/
 
 
 int main(){
@@ -281,6 +281,6 @@ int main(){
   TEST(icy_vector_test);
   TEST(int_lookup_test);
   TEST(icy_vector_abs_test);
-  TEST(myvec_test);
+  //TEST(myvec_test);
   return 0;
 }

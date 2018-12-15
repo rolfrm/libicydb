@@ -12,9 +12,11 @@ int_set * int_set_create(const char * optional_name){
   static const char * const column_names[] = {(char *)"key"};
   static const char * const column_types[] = {"int"};
   int_set * instance = calloc(sizeof(int_set), 1);
-  icy_table_init((icy_table * )instance, optional_name, 1, (unsigned int[]){sizeof(int)}, (char *[]){(char *)"key"});
   instance->column_names = (char **)column_names;
   instance->column_types = (char **)column_types;
+  
+  icy_table_init((icy_table * )instance, optional_name, 1, (unsigned int[]){sizeof(int)}, (char *[]){(char *)"key"});
+  
   return instance;
 }
 

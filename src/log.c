@@ -25,16 +25,6 @@ ICY_HIDDEN void log_print(const char * fmt, ...){
   is_printing = false;
 }
 
-static int str_index_of_last(const char * str, char symbol){
-  int idx = -1;
-  
-  for(int i = 0; str[i] != 0; i++){
-    if(str[i] == symbol)
-      idx = i;
-  }
-  return idx;
-}
-
 ICY_HIDDEN void iron_log_stacktrace(void)
 {
   // blep
