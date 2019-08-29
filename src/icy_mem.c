@@ -18,6 +18,8 @@
 static icy_mem * icy_mems = NULL;
 static u64 icy_mem_cnt = 0;
 
+bool icy_mem_emulate_memory_maps = false;
+
 icy_mem * get_icy_mem_by_name(const char * name){
   for(u64 i = 0; i < icy_mem_cnt; i++){
     if(strcmp(icy_mems[i].name, name) == 0)
@@ -43,6 +45,12 @@ void icy_mem_set_data_directory(char * data_dir){
 }
 
 icy_mem * icy_mem_create2(const char * name, bool only_32bit){
+  if(icy_mem_emulate_memory_maps){
+    icy_mem * mem = icy_mem_create3();
+    mem->name = fmtstr("%s", name);
+    return mem;
+  }
+  
   int fd = 0;
   u64 size = 0;
   if(name != NULL){
@@ -161,7 +169,10 @@ void icy_mem_realloc(icy_mem * area, size_t size){
   if(area->size == size) return;
   
   if(false == area->persisted){
+    size_t prevsize = area->size;
     area->ptr = ralloc(area->ptr, area->size = size);
+    if(prevsize < size)
+      memset(area->ptr + prevsize, 0, size - prevsize);
     return;
   }
 

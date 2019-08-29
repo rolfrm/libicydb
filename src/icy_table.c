@@ -40,12 +40,19 @@ static int keycmp(const u64 * k1,const  u64 * k2){
   else return -1;
 }
 
+/*
 static int keycmp128(const u128 * k1,const  u128 * k2){
-  if(k1->a > k2->a || k1->b > k2->b)
+  if(k1->a > k2->a)
     return 1;
-  else if(k1->a == k2->a && k1->b == k2->b)
-    return 0;
-  else return -1;
+  if(k1->a < k2->a)
+    return -1;
+  return keycmp(&k1->b, &k2->b);
+  }*/
+
+__thread int dyncmp_size = 0;
+static int keycmpdyn(const u8 * k1, const u8 * k2){
+  ASSERT(dyncmp_size);
+  return memcmp(k1, k2, dyncmp_size);
 }
 
 static size_t * get_type_sizes(icy_table * table){
@@ -103,9 +110,7 @@ void icy_table_init(icy_table * table,const char * table_name , u32 column_count
   void ** pointers = get_pointers(table);
   size_t * type_sizes = get_type_sizes(table);
   size_t key_size = column_size[0];
-  if(key_size == sizeof(u128))
-    table->cmp = (void *) keycmp128;
-  else if(column_count > 0 && table->column_types != NULL
+  if(column_count > 0 && table->column_types != NULL
 	  && (strcmp(table->column_types[0], "f32") == 0
 	      || strcmp(table->column_types[0], "float") == 0))
     table->cmp = (void *) keycmpf32;
@@ -115,8 +120,10 @@ void icy_table_init(icy_table * table,const char * table_name , u32 column_count
     table->cmp = (void *) keycmpf64;  
   else if(key_size == sizeof(u32))
     table->cmp = (void *) keycmp32;
-  else  
+  else if(key_size == sizeof(u64))
     table->cmp = (void *) keycmp;
+  else
+    table->cmp = (void *) keycmpdyn;
   
 
   for(u32 i = 0; i < column_count; i++){
@@ -153,6 +160,7 @@ void icy_table_finds(icy_table * table, void * keys, size_t * indexes, size_t cn
     return;
   void * start = key_area->ptr + key_size;
   void * end = key_area->ptr + key_area->size;
+  dyncmp_size = key_size;
   for(size_t i = 0; i < cnt || indexes == NULL; i++){
 
     //if(end < start) break;
@@ -164,6 +172,7 @@ void icy_table_finds(icy_table * table, void * keys, size_t * indexes, size_t cn
     if(startcmp == 0)
       key_index = start;
     else if(table->cmp(key, end - key_size) > 0){
+      dyncmp_size = 0;
       return;
     }else
       //key_index =memmem(start,size,key,table->key_size);
@@ -178,10 +187,12 @@ void icy_table_finds(icy_table * table, void * keys, size_t * indexes, size_t cn
       start = key_index + key_size;
     }    
   }
+  dyncmp_size = 0;
 }
 
 
 void icy_table_insert_keys(icy_table * table, void * keys, size_t * out_indexes, size_t cnt){
+  size_t * orig_out_indexes = out_indexes;
   ASSERT(icy_table_keys_sorted(table, keys, cnt));
   icy_table_check_sanity(table);
   size_t * column_size = get_type_sizes(table);
@@ -209,6 +220,7 @@ void icy_table_insert_keys(icy_table * table, void * keys, size_t * out_indexes,
   for(u32 i = 0; i < column_count; i++)
     vend[i] = column_area[i]->ptr + column_area[i]->size - column_size[i] * cnt;
   int (*cmp)( void*,  void*) = table->cmp;
+  dyncmp_size = key_size;
   for(size_t i = 0; i < cnt; i++){
     pt = bsearch_bigger((void *)cmp, keys, pt, end, key_size);
     while(pt < end && cmp(pt, keys) <= 0)
@@ -224,7 +236,10 @@ void icy_table_insert_keys(icy_table * table, void * keys, size_t * out_indexes,
       memmove(vpt + column_size[j], vpt, vend[j] - vpt);
       memset(vpt, 0, column_size[j]);
     }
-  
+    size_t testcnt = out_indexes - orig_out_indexes;
+    ASSERT(testcnt <= cnt);
+    //logd("Write.. %i\n", testcnt);
+    // TODO: Fix issue apparantly arising with emcc and O>0.
     *out_indexes = (pt - key_area->ptr) / key_size;
     
     out_indexes += 1;
@@ -239,7 +254,9 @@ void icy_table_insert_keys(icy_table * table, void * keys, size_t * out_indexes,
   //todo: disable then when tables gets big enough
   // until then this will detect possible programming errors, causing the tables to rapidly expand.
   ASSERT(table->count < 100000);
+  dyncmp_size = 0;
 }
+
 
 void icy_table_inserts(icy_table * table, void ** values, size_t cnt){
   icy_table_check_sanity(table);
@@ -248,7 +265,6 @@ void icy_table_inserts(icy_table * table, void ** values, size_t cnt){
 
   size_t * column_size = get_type_sizes(table);
   icy_mem ** column_area = get_icy_mems(table);
-  
   ASSERT(icy_table_keys_sorted(table, keys, cnt));
   size_t indexes[cnt];
   memset(indexes, 0, sizeof(indexes));
@@ -275,7 +291,7 @@ void icy_table_inserts(icy_table * table, void ** values, size_t cnt){
       }
     }
   }
-  size_t indexes2[newcnt];
+   size_t indexes2[newcnt];
   memset(indexes2, 0, sizeof(indexes2));
   {
     u32 csize = column_size[0];
@@ -285,6 +301,7 @@ void icy_table_inserts(icy_table * table, void ** values, size_t cnt){
       if(indexes[i] == 0){
 	indexes2[offset] = i;
 	memcpy(newvalues + csize * offset, values[0] + i * csize, csize);
+
 	offset += 1;
       }
     }
@@ -292,7 +309,6 @@ void icy_table_inserts(icy_table * table, void ** values, size_t cnt){
   // make room and insert keys
     icy_table_insert_keys(table, newvalues, indexes, newcnt);
   }
-
   // Insert the new data
   for(u32 j = 1; j < table->column_count; j++){
     size_t csize = column_size[j];
@@ -366,7 +382,7 @@ size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_
   
   size_t key_size = get_type_sizes(table)[0];
   icy_mem * key_area = get_icy_mems(table)[0];
-  
+  dyncmp_size = key_size;
   size_t orig_cnt = cnt;
   if(*idx == 0) *idx = 1;
   for(size_t i = 0; i < keycnt; i++){
@@ -405,6 +421,7 @@ size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_
     }while(cnt > 0 && start < end && table->cmp(start, key) == 0);
 
   }
+  dyncmp_size = 0;
   return orig_cnt - cnt;
 }
 
