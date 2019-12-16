@@ -1,4 +1,4 @@
-OPT = -g3 -O0
+OPT = -g0 -O3
 LIB_SOURCES1 = icy_mem.c icy_table.c log.c mem.c error.c array.c icy_vector.c icy_vector_abs.c
 LIB_SOURCES = $(addprefix src/, $(LIB_SOURCES1))
 CC = gcc

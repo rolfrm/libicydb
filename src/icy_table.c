@@ -295,7 +295,15 @@ void icy_table_inserts(icy_table * table, void ** values, size_t cnt){
   memset(indexes2, 0, sizeof(indexes2));
   {
     u32 csize = column_size[0];
-    void * newvalues = calloc(newcnt, csize);
+
+    static __thread void * newvalues = NULL;
+    static __thread size_t newvalues_size;
+    size_t total_size = newcnt * csize;
+    if(newvalues_size < total_size){
+      newvalues_size = total_size;
+      newvalues = realloc(newvalues, newvalues_size);
+    }
+    memset(newvalues, 0, total_size);
     size_t offset = 0;
     for(size_t i = 0; i < cnt; i++){
       if(indexes[i] == 0){
@@ -375,6 +383,16 @@ void icy_table_print(icy_table * table){
   }
 }
 
+static void * memmem2(void * start, size_t size, void * key, size_t key_size){
+  // like memmem, but only searches chunks of key_size.
+  for(size_t i = 0; i < size; i+=key_size){
+    if(memcmp(start + i, key, key_size) == 0)
+      return start + i;
+  }
+  return NULL;
+
+}
+
 size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_keys, size_t * indexes, size_t cnt, size_t * idx){
   size_t fakeidx = 0;
   if(idx == NULL)
@@ -399,8 +417,14 @@ size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_
     if(firstcmp == 0) 
       key_index = start; // no need to search.
     else
-      key_index = memmem(start, size, key, key_size);
-    //key_index = bsearch(key, start, size / key_size, key_size, table->cmp);
+      {
+	if(table->is_multi_table)
+	  // if multi table we need to search
+	  // for lowest bounds
+	  key_index = memmem2(start, size, key, key_size);
+	else
+	  key_index = bsearch(key, start, size / key_size, key_size, (void *) table->cmp);
+      }
     if(key_index == NULL)
       continue;
     start = key_index;
