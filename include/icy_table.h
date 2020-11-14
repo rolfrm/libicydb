@@ -19,3 +19,5 @@ void icy_table_print(icy_table * table);
 size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_keys, size_t * indexes, size_t cnt, size_t * idx);
 
 void icy_table_add(bool (*printer)(void * ptr, const char * type));
+
+icy_mem ** icy_table_get_memory_areas(icy_table * table);

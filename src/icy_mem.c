@@ -100,7 +100,7 @@ icy_mem * icy_mem_create2(const char * name, bool only_32bit){
   ASSERT(ptr != NULL);
   icy_mem mema = {
     .ptr = ptr, .size = size,
-    .name = (char *) name, .fd = fd,
+    .name = (char *) fmtstr("%s", name), .fd = fd,
     .only_32bit = only_32bit,
     .persisted = true
   };

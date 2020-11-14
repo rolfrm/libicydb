@@ -63,6 +63,10 @@ static icy_mem ** get_icy_mems(icy_table * table){
   return (icy_mem **)(&table->tail + table->column_count + table->column_count);
 }
 
+icy_mem ** icy_table_get_memory_areas(icy_table * table){
+  return get_icy_mems(table);
+}
+
 static void ** get_pointers(icy_table * table){
   return &table->tail + table->column_count;
 }
@@ -253,7 +257,7 @@ void icy_table_insert_keys(icy_table * table, void * keys, size_t * out_indexes,
   table->count = key_area->size / key_size - 1;
   //todo: disable then when tables gets big enough
   // until then this will detect possible programming errors, causing the tables to rapidly expand.
-  ASSERT(table->count < 100000);
+  //ASSERT(table->count < 100000);
   dyncmp_size = 0;
 }
 
