@@ -1,0 +1,20 @@
+OPT = -O3 -g0
+SOURCES1 = icy_mem.c icy_table.c icy_vector.c icy_vector_abs.c
+SOURCES = $(addprefix src/, $(SOURCES1))
+
+CC = emcc
+TARGET = libicydb.bc
+OBJECTS =$(SOURCES:.c=.bc)
+LDFLAGS= -s WASM=1
+LIBS= 
+CFLAGS = -std=c11 -Iinclude -c $(OPT) -Wall -Wextra -Werror=implicit-function-declaration -Wformat=0 -D_GNU_SOURCE  -fdiagnostics-color
+all: $(TARGET)
+$(TARGET): $(OBJECTS)
+	$(CC) -r $(LDFLAGS)   $(OBJECTS) $(LIBS) -o $@
+
+%.bc: %.c $(HEADERS)
+	$(CC) -s WASM=1 $(CFLAGS) $< -o $@ -MMD -MF $@.depends
+depend: h-depend
+clean:
+	rm $(OBJECTS) $(TARGET) *.bc.depends
+-include $(OBJECTS:.bc=.bc.depends)

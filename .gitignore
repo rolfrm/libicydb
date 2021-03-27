@@ -3,6 +3,7 @@
 *.ko
 *.obj
 *.elf
+*.bc 
 
 # Precompiled Headers
 *.gch
@@ -31,4 +32,3 @@
 *~
 *.depends
 \#*\#
-data/

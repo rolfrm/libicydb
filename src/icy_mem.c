@@ -14,7 +14,9 @@
 #include "mem.h"
 #include "array.h"
 #include "utils.h"
-
+#ifndef MAP_32BIT
+#define MAP_32BIT 0
+#endif
 static icy_mem * icy_mems = NULL;
 static u64 icy_mem_cnt = 0;
 
@@ -156,7 +158,7 @@ void * icy_mem_alloc(const char * name, size_t min_size){
   return icy_mem_alloc2(name, min_size, &s);
 }
 
-void icy_mem_realloc(icy_mem * area, u64 size){
+void icy_mem_realloc(icy_mem * area, size_t size){
   ASSERT(area != NULL);
   if(area->size == size) return;
   
