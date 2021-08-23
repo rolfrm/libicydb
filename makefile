@@ -9,10 +9,12 @@ LIBS=
 ALL= $(TARGET)
 CFLAGS = -Isrc/ -Iinclude/ -std=gnu11 -c $(OPT) -Wall -Wextra -Werror=implicit-function-declaration -Wformat=0 -D_GNU_SOURCE -fdiagnostics-color -Wextra  -Wwrite-strings -Werror -msse4.2 -mtune=corei7 -ffast-math -Werror=maybe-uninitialized -fPIC -DUSE_VALGRIND
 
-
-
-$(TARGET): $(LIB_OBJECTS)
+$(TARGET): $(LIB_OBJECTS) libicydb.a
 	$(CC) $(LDFLAGS) $(LIB_OBJECTS) $(LIBS) -o $@
+
+libicydb.a: $(LIB_OBJECTS)
+	ar rcs $@ $(LIB_OBJECTS) 
+
 
 all: $(ALL)
 

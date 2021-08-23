@@ -4,18 +4,18 @@ typedef struct _icy_table{
   size_t count;
   const bool is_multi_table;
   const unsigned int column_count;
-  int (*cmp) (void * k1, void * k2);
+  int (*cmp) (const void * k1, const void * k2);
   void * tail;
 }icy_table;
 
 void icy_table_init(icy_table * table, const char * table_name, unsigned int column_count, unsigned int * column_size, char ** column_name);
 void icy_table_check_sanity(icy_table * table);
-bool icy_table_keys_sorted(icy_table * table, void * keys, size_t cnt);
-void icy_table_finds(icy_table * table, void * keys, size_t * indexes, size_t cnt);
+bool icy_table_keys_sorted(icy_table * table, const void * keys, size_t cnt);
+void icy_table_finds(icy_table * table, const void * keys, size_t * indexes, size_t cnt);
 void icy_table_inserts(icy_table * table, void ** values, size_t count);
 void icy_table_clear(icy_table * table);
-void icy_table_remove_indexes(icy_table * table, size_t * indexes, size_t index_count);
+void icy_table_remove_indexes(icy_table * table, const size_t * indexes, size_t index_count);
 void icy_table_print(icy_table * table);
-size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_keys, size_t * indexes, size_t cnt, size_t * idx);
+size_t icy_table_iter(icy_table * table, const void * keys, size_t keycnt, void * out_keys, size_t * indexes, size_t cnt, size_t * idx);
 
 void icy_table_add(bool (*printer)(void * ptr, const char * type));

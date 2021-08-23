@@ -61,7 +61,7 @@ static void ** get_pointers(icy_table * table){
   return &table->tail + table->column_count;
 }
 
-static bool indexes_unique_and_sorted(size_t * indexes, size_t cnt){
+static bool indexes_unique_and_sorted(const size_t * indexes, size_t cnt){
   if(cnt == 0) return true;
   for(size_t i = 0; i < cnt - 1; i++)
     if(indexes[i] >= indexes[i + 1])
@@ -80,9 +80,9 @@ void icy_table_check_sanity(icy_table * table){
       ASSERT(cnt == areas[i]->size / type_size[i]);
   }
 }
-void * bsearch_bigger(int (*cmp)(void*, void*), void * key, void * pt, void * end, size_t keysize);
+const void * bsearch_bigger(int (*cmp)(const void*, const void*), const void * key, const void * pt, const void * end, size_t keysize);
   
-bool icy_table_keys_sorted(icy_table * table, void * keys, size_t cnt){
+bool icy_table_keys_sorted(icy_table * table, const void * keys, size_t cnt){
   size_t key_size = get_type_sizes(table)[0];
   if(cnt == 0) return true;
   if(table->is_multi_table){
@@ -143,7 +143,7 @@ void icy_table_init(icy_table * table,const char * table_name , u32 column_count
   icy_table_check_sanity(table);
 }
 
-void icy_table_finds(icy_table * table, void * keys, size_t * indexes, size_t cnt){
+void icy_table_finds(icy_table * table, const void * keys, size_t * indexes, size_t cnt){
   ASSERT(icy_table_keys_sorted(table, keys, cnt));
   icy_table_check_sanity(table);
   memset(indexes, 0, cnt * sizeof(indexes[0]));
@@ -159,7 +159,7 @@ void icy_table_finds(icy_table * table, void * keys, size_t * indexes, size_t cn
     //if(end < start) break;
     size_t size = end - start;
     void * key_index = NULL;
-    void * key = keys + i * key_size;
+    const void * key = keys + i * key_size;
     int startcmp = table->cmp(key, start);
     if(startcmp < 0) continue;
     if(startcmp == 0)
@@ -182,7 +182,7 @@ void icy_table_finds(icy_table * table, void * keys, size_t * indexes, size_t cn
 }
 
 
-void icy_table_insert_keys(icy_table * table, void * keys, size_t * out_indexes, size_t cnt){
+void icy_table_insert_keys(icy_table * table, const void * keys, size_t * out_indexes, size_t cnt){
   ASSERT(icy_table_keys_sorted(table, keys, cnt));
   icy_table_check_sanity(table);
   size_t * column_size = get_type_sizes(table);
@@ -209,32 +209,30 @@ void icy_table_insert_keys(icy_table * table, void * keys, size_t * out_indexes,
   void * vend[column_count];
   for(u32 i = 0; i < column_count; i++)
     vend[i] = column_area[i]->ptr + column_area[i]->size - column_size[i] * cnt;
-  int (*cmp)( void*,  void*) = table->cmp;
+  int (*cmp)( const void*,  const void*) = table->cmp;
   for(size_t i = 0; i < cnt; i++){
-    pt = bsearch_bigger((void *)cmp, keys, pt, end, key_size);
-    while(pt < end && cmp(pt, keys) <= 0)
+	 pt = (void *) bsearch_bigger((void *)cmp, keys, pt, end, key_size);
+	 while(pt < end && cmp(pt, keys) <= 0)
       pt += key_size;
     
     size_t offset = (pt - key_area->ptr) / key_size;
-    // move everything from keysize up
-    memmove(pt + key_size, pt , end - pt); 
-    memmove(pt, keys, key_size);
+	 // move everything from keysize up
+    memmove(pt + key_size, pt , end - pt);
 
-    for(u32 j = 0; j < column_count; j++){
+    memmove(pt, keys, key_size);
+	 for(u32 j = 0; j < column_count; j++){
       void * vpt = column_area[j]->ptr + offset * column_size[j];
       memmove(vpt + column_size[j], vpt, vend[j] - vpt);
       memset(vpt, 0, column_size[j]);
     }
-  
-    *out_indexes = (pt - key_area->ptr) / key_size;
+	 *out_indexes = (pt - key_area->ptr) / key_size;
     
     out_indexes += 1;
     keys += key_size;
     pt += key_size;
     end += key_size;
-    for(u32 j = 0; j < table->column_count; j++){
+	 for(u32 j = 0; j < column_count; j++)
       vend[j] += column_size[j];
-    }
   }
   table->count = key_area->size / key_size - 1;
   //todo: disable then when tables gets big enough
@@ -245,7 +243,7 @@ void icy_table_insert_keys(icy_table * table, void * keys, size_t * out_indexes,
 void icy_table_inserts(icy_table * table, void ** values, size_t cnt){
   icy_table_check_sanity(table);
   ASSERT(values[0] != NULL);
-  void * keys = values[0];
+  const void * keys = values[0];
 
   size_t * column_size = get_type_sizes(table);
   icy_mem ** column_area = get_icy_mems(table);
@@ -261,22 +259,23 @@ void icy_table_inserts(icy_table * table, void ** values, size_t cnt){
     icy_table_finds(table, keys, indexes, cnt);
     for(size_t i = 0; i < cnt ; i++){
       if(indexes[i] == 0)
-	newcnt += 1;
+		  newcnt += 1;
     }
     if(newcnt != cnt){
       for(size_t j = 1; j < table->column_count; j++){
-	icy_mem * value_area = column_area[j];
-	size_t size = column_size[j];
-	for(size_t i = 0; i < cnt; i++){
-	  if(indexes[i] != 0){
-	    // overwrite existing values with new values
-	    memcpy(value_area->ptr + size * indexes[i], values[j] + size * i, size);
-	  }
-	}
+		  icy_mem * value_area = column_area[j];
+		  size_t size = column_size[j];
+		  for(size_t i = 0; i < cnt; i++){
+			 if(indexes[i] != 0){
+				// overwrite existing values with new values
+				memcpy(value_area->ptr + size * indexes[i], values[j] + size * i, size);
+			 }
+		  }
       }
     }
   }
   size_t indexes2[newcnt];
+  ASSERT(newcnt > 0);
   memset(indexes2, 0, sizeof(indexes2));
   {
     u32 csize = column_size[0];
@@ -284,16 +283,17 @@ void icy_table_inserts(icy_table * table, void ** values, size_t cnt){
     size_t offset = 0;
     for(size_t i = 0; i < cnt; i++){
       if(indexes[i] == 0){
-	indexes2[offset] = i;
-	memcpy(newvalues + csize * offset, values[0] + i * csize, csize);
-	offset += 1;
+		  indexes2[offset] = i;
+		  memcpy(newvalues + csize * offset, values[0] + i * csize, csize);
+		  offset += 1;
       }
     }
     memset(indexes, 0, sizeof(indexes));
   // make room and insert keys
     icy_table_insert_keys(table, newvalues, indexes, newcnt);
+	 free(newvalues);
   }
-
+  
   // Insert the new data
   for(u32 j = 1; j < table->column_count; j++){
     size_t csize = column_size[j];
@@ -317,7 +317,7 @@ void icy_table_clear(icy_table * table){
   table->count = 0;
 }
 
-void icy_table_remove_indexes(icy_table * table, size_t * indexes, size_t cnt){
+void icy_table_remove_indexes(icy_table * table, const size_t * indexes, size_t cnt){
   ASSERT(indexes_unique_and_sorted(indexes, cnt));
 
   size_t * column_size = get_type_sizes(table);
@@ -360,7 +360,7 @@ void icy_table_print(icy_table * table){
   }
 }
 
-size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_keys, size_t * indexes, size_t cnt, size_t * idx){
+size_t icy_table_iter(icy_table * table, const void * keys, size_t keycnt, void * out_keys, size_t * indexes, size_t cnt, size_t * idx){
   size_t fakeidx = 0;
   if(idx == NULL)
     idx = &fakeidx;
@@ -371,7 +371,7 @@ size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_
   size_t orig_cnt = cnt;
   if(*idx == 0) *idx = 1;
   for(size_t i = 0; i < keycnt; i++){
-    void * key = keys + i * key_size;
+    const void * key = keys + i * key_size;
     void * start = key_area->ptr + *idx * key_size;
     void * end = key_area->ptr + key_area->size;
     if(start >= end)
@@ -409,7 +409,7 @@ size_t icy_table_iter(icy_table * table, void * keys, size_t keycnt, void * out_
   return orig_cnt - cnt;
 }
 
-ICY_HIDDEN void * bsearch_bigger(int (*cmp)(void*, void*), void * key, void * pt, void * end, size_t keysize){
+ICY_HIDDEN const void * bsearch_bigger(int (*cmp)(const void*, const void*), const void * key, const void * pt, const void * end, size_t keysize){
 
   size_t a = 0;
   size_t cnt = ((size_t)(end - pt)) / keysize;

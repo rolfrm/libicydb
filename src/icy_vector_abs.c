@@ -84,6 +84,7 @@ void icy_vector_abs_increase_capacity(icy_vector_abs * table){
 
 size_t _icy_vector_abs_alloc(icy_vector_abs * table){
   size_t freeindexcnt = _icy_vector_abs_free_index_count(table);
+  logd("Freeidx cnt: %i\n", freeindexcnt);
   if(freeindexcnt > 0){
     size_t idx = ((size_t *) table->free_indexes->ptr)[freeindexcnt];
     _icy_vector_abs_free_index_count_set(table, freeindexcnt - 1);
@@ -237,13 +238,13 @@ void icy_vector_abs_init(icy_vector_abs * base, const char * name){
   
   
   icy_mem ** areas = get_mem_areas(base);
-  if(areas[0]->size == 1)
+  if(base->column_count > 0 && areas[0]->size == 1)
     icy_vector_abs_set_capacity(base, 8);
   void ** ptrs = get_ptrs(base);
-  size_t * sizes = get_column_sizes(base);
+  //size_t * sizes = get_column_sizes(base);
   for(size_t i = 0; i < base->column_count; i++){
     ptrs[i] = areas[i]->ptr;
-    ASSERT((areas[i]->size % sizes[i]) == 0);
+    //ASSERT((sizes[i] == 0 ||  areas[i]->size % sizes[i]) == 0);
   }
   
   /*
