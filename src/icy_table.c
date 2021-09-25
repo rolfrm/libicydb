@@ -169,13 +169,13 @@ void icy_table_finds(icy_table * table, const void * keys, size_t * indexes, siz
     }else
       //key_index =memmem(start,size,key,table->key_size);
       key_index = bsearch(key, start, size / key_size, key_size, (void *)table->cmp);
-    
+	 
     if(key_index == 0){
       if(indexes != NULL)
-	indexes[i] = 0;
+		  indexes[i] = 0;
     }else{
       if(indexes != NULL)
-	indexes[i] = (key_index - key_area->ptr) / key_size;
+		  indexes[i] = (key_index - key_area->ptr) / key_size;
       start = key_index + key_size;
     }    
   }
@@ -275,7 +275,8 @@ void icy_table_inserts(icy_table * table, void ** values, size_t cnt){
     }
   }
   size_t indexes2[newcnt];
-  ASSERT(newcnt > 0);
+  if(newcnt == 0)
+	 return; // no new elements
   memset(indexes2, 0, sizeof(indexes2));
   {
     u32 csize = column_size[0];
@@ -386,7 +387,7 @@ size_t icy_table_iter(icy_table * table, const void * keys, size_t keycnt, void 
     else
       key_index = memmem(start, size, key, key_size);
     //key_index = bsearch(key, start, size / key_size, key_size, table->cmp);
-    if(key_index == NULL)
+	 if(key_index == NULL)
       continue;
     start = key_index;
     *idx = (start - key_area->ptr) / key_size;

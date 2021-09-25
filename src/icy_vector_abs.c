@@ -84,12 +84,9 @@ void icy_vector_abs_increase_capacity(icy_vector_abs * table){
 
 size_t _icy_vector_abs_alloc(icy_vector_abs * table){
   size_t freeindexcnt = _icy_vector_abs_free_index_count(table);
-  logd("Freeidx cnt: %i\n", freeindexcnt);
   if(freeindexcnt > 0){
     size_t idx = ((size_t *) table->free_indexes->ptr)[freeindexcnt];
     _icy_vector_abs_free_index_count_set(table, freeindexcnt - 1);
-    //void * p = icy_vector_abs_lookup(table, (icy_index){idx});
-    //memset(p, 0, table->element_size);
     return idx;
   }
   
